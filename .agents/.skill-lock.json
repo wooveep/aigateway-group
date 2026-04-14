@@ -1,0 +1,29 @@
+{
+  "version": 3,
+  "skills": {
+    "goframe-v2": {
+      "source": "gogf/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gogf/skills.git",
+      "skillPath": "skills/goframe-v2/SKILL.md",
+      "skillFolderHash": "8ae8bd8af9133f86e33a94d0e0bc241619d0058f",
+      "installedAt": "2026-03-22T11:35:58.119Z",
+      "updatedAt": "2026-03-22T11:35:58.119Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "cline",
+    "codex",
+    "cursor",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-cli",
+    "opencode",
+    "warp",
+    "antigravity"
+  ]
+}

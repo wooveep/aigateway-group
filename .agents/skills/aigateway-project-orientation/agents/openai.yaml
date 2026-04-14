@@ -1,0 +1,4 @@
+interface:
+  display_name: "AIGateway Orientation"
+  short_description: "Map the repo structure, ownership, and likely change areas"
+  default_prompt: "Use $aigateway-project-orientation to explain the aigateway-group repository structure, the role of Portal, Console, Higress, and plugin-server, the root source-of-truth documents, and where a requested change most likely belongs."

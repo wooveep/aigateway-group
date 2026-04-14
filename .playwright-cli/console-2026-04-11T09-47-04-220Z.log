@@ -1,0 +1,3 @@
+[     362ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ http://127.0.0.1:8080/user/info?ts=1775900824518:0
+[     637ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ http://127.0.0.1:8080/user/info?ts=1775900824819:0
+[     827ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8080/login?redirect=%2Fai%2Fdashboard:0

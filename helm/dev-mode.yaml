@@ -1,0 +1,130 @@
+# Unified dev mode values for the whole aigateway-group.
+#
+# You can disable a service for local debugging by changing one of:
+#   higress-core.enabled
+#   aigateway-console.enabled
+#   aigateway-portal.enabled
+
+global:
+  ingressClass: aigateway
+  local: true
+  enableRedis: true
+  enablePluginServer: true
+  imagePullPolicy: IfNotPresent
+  o11y:
+    enabled: true
+
+higress-core:
+  enabled: true
+  mysql:
+    # Preferred mysql config style.
+    mysql:
+      enabled: true
+      name: mysql-server
+      repository: aigateway/mariadb
+      tag: "11.4"
+  gateway:
+    name: aigateway-gateway
+    repository: aigateway/gateway
+    tag: "2.2.0-dev-20260327030541"
+    service:
+      type: ClusterIP
+    hostPort:
+      enabled: true
+  controller:
+    name: aigateway-controller
+    repository: aigateway/controller
+    tag: "2.2.0-dev-20260327030541"
+  pilot:
+    repository: aigateway/pilot
+    tag: "2.2.0-dev-20260327030541"
+  pluginServer:
+    name: aigateway-plugin-server
+    repository: aigateway/plugin-server
+    tag: "1.0.0-dev-20260327030541"
+  redis:
+    redis:
+      name: redis-stack-server
+      repository: aigateway/redis-stack-server
+      tag: "7.4.0"
+
+aigateway-console:
+  enabled: true
+  name: aigateway-console
+  image:
+    repository: aigateway/console
+    tag: "2.2.0-dev-20260327030541"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+  portalDatabase:
+    enabled: true
+    host: mysql-server
+
+aigateway-portal:
+  enabled: true
+  name: aigateway-portal
+  # Disable portal-local mysql; use higress-core mysql instead.
+  mysql:
+    enabled: false
+  database:
+    createSecret: false
+    host: mysql-server
+  image:
+    repository: aigateway/portal
+    tag: "0.2.0-dev-20260410135707"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8081
+  session:
+    secretKey: change-me-session-secret
+
+# Config block for root scripts (ignored by Helm templates).
+dev:
+  namespace: aigateway-system
+  releaseName: aigateway
+  portForward:
+    enabled: true
+    bindAddress: 127.0.0.1
+    localPortStart: 20000
+    waitReadySeconds: 180
+    includeServices:
+      - aigateway-console
+      - aigateway-console-grafana
+      - aigateway-console-loki
+      - aigateway-console-prometheus
+      - aigateway-controller
+      - aigateway-plugin-server
+      - aigateway-portal
+      - mysql-server
+      - redis-stack-server
+    skipServices: []
+    # Fixed local ports for stable development integrations.
+    servicePorts:
+      aigateway-console:
+        "8080": 8080
+      aigateway-console-grafana:
+        "3000": 3000
+      aigateway-console-loki:
+        "3100": 3100
+        "7946": 7946
+        "9095": 9095
+      aigateway-console-prometheus:
+        "9090": 9090
+      aigateway-controller:
+        "443": 15443
+        "8888": 8888
+        "8889": 8889
+        "15010": 15010
+        "15012": 15012
+        "15014": 15014
+        "15051": 15051
+      aigateway-plugin-server:
+        "80": 18080
+      aigateway-portal:
+        "8081": 8081
+      mysql-server:
+        "3306": 3306
+      redis-stack-server:
+        "6379": 6379

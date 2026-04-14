@@ -1,0 +1,50 @@
+error: unable to forward port because pod is not running. Current status=Pending
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Handling connection for 3306
+Handling connection for 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Handling connection for 3306
+I0414 12:35:36.838400  137792 log.go:244] (0xc0000da580) (0xc00021fea0) Create stream
+I0414 12:35:36.838463  137792 log.go:244] (0xc0000da580) (0xc00021fea0) Stream added, broadcasting: 1
+I0414 12:35:36.839811  137792 log.go:244] (0xc0000da580) Reply frame received for 1
+I0414 12:35:36.839845  137792 log.go:244] (0xc00021fea0) (1) Writing data frame
+I0414 12:35:36.839915  137792 log.go:244] (0xc0000da580) (0xc0003cdd60) Create stream
+I0414 12:35:36.839922  137792 log.go:244] (0xc0000da580) (0xc0003cdd60) Stream added, broadcasting: 3
+I0414 12:35:36.840413  137792 log.go:244] (0xc0000da580) Reply frame received for 3
+I0414 12:35:36.845145  137792 log.go:244] (0xc0000da580) Data frame received for 3
+I0414 12:35:36.845175  137792 log.go:244] (0xc0003cdd60) (3) Data frame handling
+I0414 12:35:36.845183  137792 log.go:244] (0xc0003cdd60) (3) Data frame sent
+E0414 12:35:36.845375  137792 portforward.go:404] "Unhandled Error" err="error copying from local connection to remote stream: writeto tcp4 127.0.0.1:3306->127.0.0.1:53436: read tcp4 127.0.0.1:3306->127.0.0.1:53436: read: connection reset by peer"
+I0414 12:35:36.845419  137792 log.go:244] (0xc0003cdd60) (3) Writing data frame
+I0414 12:35:36.845472  137792 log.go:244] (0xc0000da580) (0xc0003cdd60) Stream removed, broadcasting: 3
+I0414 12:35:36.846614  137792 log.go:244] (0xc0000da580) Data frame received for 3
+I0414 12:35:36.846636  137792 log.go:244] (0xc0000da580) Data frame gone away for 3
+I0414 12:35:36.846647  137792 log.go:244] (0xc0000da580) Data frame received for 1
+I0414 12:35:36.846661  137792 log.go:244] (0xc00021fea0) (1) Data frame handling
+I0414 12:35:36.846678  137792 log.go:244] (0xc0000da580) (0xc00021fea0) Stream removed, broadcasting: 1
+Forwarding from 127.0.0.1:3306 -> 3306
+Handling connection for 3306
+I0414 12:36:08.493427  138833 log.go:244] (0xc0009b89a0) (0xc000663e00) Create stream
+I0414 12:36:08.493474  138833 log.go:244] (0xc0009b89a0) (0xc000663e00) Stream added, broadcasting: 1
+I0414 12:36:08.496256  138833 log.go:244] (0xc0009b89a0) Reply frame received for 1
+I0414 12:36:08.496286  138833 log.go:244] (0xc000663e00) (1) Writing data frame
+I0414 12:36:08.496347  138833 log.go:244] (0xc0009b89a0) (0xc000662aa0) Create stream
+I0414 12:36:08.496354  138833 log.go:244] (0xc0009b89a0) (0xc000662aa0) Stream added, broadcasting: 3
+I0414 12:36:08.496798  138833 log.go:244] (0xc0009b89a0) Reply frame received for 3
+I0414 12:36:08.500948  138833 log.go:244] (0xc0009b89a0) Data frame received for 3
+I0414 12:36:08.500979  138833 log.go:244] (0xc000662aa0) (3) Data frame handling
+I0414 12:36:08.500996  138833 log.go:244] (0xc000662aa0) (3) Data frame sent
+E0414 12:36:08.501156  138833 portforward.go:404] "Unhandled Error" err="error copying from local connection to remote stream: writeto tcp4 127.0.0.1:3306->127.0.0.1:35952: read tcp4 127.0.0.1:3306->127.0.0.1:35952: read: connection reset by peer"
+I0414 12:36:08.501204  138833 log.go:244] (0xc000662aa0) (3) Writing data frame
+I0414 12:36:08.501261  138833 log.go:244] (0xc0009b89a0) (0xc000662aa0) Stream removed, broadcasting: 3
+I0414 12:36:08.502259  138833 log.go:244] (0xc0009b89a0) Data frame received for 3
+I0414 12:36:08.502300  138833 log.go:244] (0xc0009b89a0) Data frame received for 1
+I0414 12:36:08.502325  138833 log.go:244] (0xc000663e00) (1) Data frame handling
+I0414 12:36:08.502331  138833 log.go:244] (0xc0009b89a0) (0xc000663e00) Stream removed, broadcasting: 1
+I0414 12:36:08.502341  138833 log.go:244] (0xc0009b89a0) Data frame gone away for 3

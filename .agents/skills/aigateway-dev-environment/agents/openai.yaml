@@ -1,0 +1,4 @@
+interface:
+  display_name: "AIGateway Dev Env"
+  short_description: "Build and start the repo's local development environment"
+  default_prompt: "Use $aigateway-dev-environment whenever you need to tell someone how to start, build, redeploy, port-forward, or debug the aigateway-group local development environment. Prefer the repository scripts in ./scripts, especially scripts/aigateway-dev.py and scripts/port-forward-all.py."

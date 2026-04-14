@@ -1,0 +1,54 @@
+# Single source of truth for local image versions and minikube defaults.
+#
+# `sync` writes the image repository/tag values below back into the Helm values
+# files used by local dev, minikube, k3d, and gray production profiles.
+
+defaults:
+  chartDir: higress/helm/higress
+  devConfigFile: helm/dev-mode.yaml
+  localValuesFile: higress/helm/higress/values-local-minikube.yaml
+  namespace: aigateway-system
+  releaseName: aigateway
+  buildComponents:
+    - aigateway
+    - controller
+    - gateway
+    - pilot
+    - console
+    - portal
+    - plugins
+    - plugin-server
+
+minikube:
+  profile: minikube
+  driver: docker
+  cpus: 4
+  memory: 8192
+  diskSize: 20g
+  addons:
+    - metrics-server
+
+images:
+  # Kept in sync with aigateway-console.certmanager.image.* because the
+  # existing local build flow still resolves the "aigateway" image from there.
+  aigateway:
+    repository: aigateway
+    tag: "dev-20260327030541"
+  controller:
+    repository: aigateway/controller
+    tag: "2.2.0-dev-20260327030541"
+  gateway:
+    repository: aigateway/gateway
+    tag: "2.2.0-dev-20260327030541"
+  pilot:
+    repository: aigateway/pilot
+    tag: "2.2.0-dev-20260327030541"
+  console:
+    repository: aigateway/console
+    tag: "2.2.0-dev-20260327030541"
+  portal:
+    repository: aigateway/portal
+    tag: "0.2.0-dev-20260410135707"
+  plugin-server:
+    repository: aigateway/plugin-server
+    tag: "1.0.0-dev-20260327030541"

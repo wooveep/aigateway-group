@@ -1,0 +1,4 @@
+interface:
+  display_name: "AIGateway Status"
+  short_description: "Summarize the current phase, progress, blockers, and next step"
+  default_prompt: "Use $aigateway-project-status to summarize the aigateway-group repository's current phase, in-progress work, blockers, recent completed items, milestone state, and next likely step from the root planning documents."
