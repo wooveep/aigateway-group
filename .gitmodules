@@ -1,0 +1,12 @@
+[submodule "aigateway-console"]
+	path = aigateway-console
+	url = https://github.com/wooveep/higress-console.git
+[submodule "aigateway-portal"]
+	path = aigateway-portal
+	url = https://github.com/wooveep/aigateway-portal.git
+[submodule "higress"]
+	path = higress
+	url = https://github.com/wooveep/higress.git
+[submodule "plugin-server"]
+	path = plugin-server
+	url = https://github.com/wooveep/plugin-server.git
