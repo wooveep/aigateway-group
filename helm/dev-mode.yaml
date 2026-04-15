@@ -13,6 +13,9 @@ global:
   imagePullPolicy: IfNotPresent
   o11y:
     enabled: true
+    loki:
+      pvc:
+        enabled: false
 
 higress-core:
   enabled: true
@@ -53,7 +56,7 @@ aigateway-console:
   name: aigateway-console
   image:
     repository: aigateway/console
-    tag: "2.2.0-dev-20260327030541"
+    tag: "2.2.0-dev-20260415214151"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -72,7 +75,7 @@ aigateway-portal:
     host: mysql-server
   image:
     repository: aigateway/portal
-    tag: "0.2.0-dev-20260410135707"
+    tag: "0.2.0-dev-20260415214151"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP

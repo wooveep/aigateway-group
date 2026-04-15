@@ -19,3 +19,104 @@ I0414 12:36:08.511493  138643 log.go:244] (0xc0000da630) (0xc0006ff540) Stream r
 I0414 12:36:08.511496  138643 log.go:244] (0xc0000da630) Data frame received for 1
 I0414 12:36:08.511501  138643 log.go:244] (0xc0008206e0) (1) Data frame handling
 I0414 12:36:08.511504  138643 log.go:244] (0xc0000da630) (0xc0008206e0) Stream removed, broadcasting: 1
+Handling connection for 3000
+I0414 12:37:13.912508  138643 log.go:244] (0xc0000da630) (0xc000820000) Create stream
+I0414 12:37:13.912524  138643 log.go:244] (0xc0000da630) (0xc000820000) Stream added, broadcasting: 5
+I0414 12:37:13.913378  138643 log.go:244] (0xc0000da630) Reply frame received for 5
+I0414 12:37:13.913398  138643 log.go:244] (0xc000820000) (5) Writing data frame
+I0414 12:37:13.913460  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
+I0414 12:37:13.913469  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 7
+I0414 12:37:13.914090  138643 log.go:244] (0xc0000da630) Reply frame received for 7
+I0414 12:37:13.914139  138643 log.go:244] (0xc0008e0000) (7) Writing data frame
+I0414 12:37:13.918547  138643 log.go:244] (0xc0000da630) Data frame received for 7
+I0414 12:37:13.918587  138643 log.go:244] (0xc0008e0000) (7) Data frame handling
+I0414 12:37:13.918611  138643 log.go:244] (0xc0008e0000) (7) Data frame sent
+I0414 12:37:13.919060  138643 log.go:244] (0xc0008e0000) (7) Writing data frame
+I0414 12:37:13.920167  138643 log.go:244] (0xc0000da630) Data frame received for 5
+I0414 12:37:13.920183  138643 log.go:244] (0xc000820000) (5) Data frame handling
+I0414 12:37:13.920200  138643 log.go:244] (0xc0000da630) (0xc000820000) Stream removed, broadcasting: 5
+I0414 12:37:13.920521  138643 log.go:244] (0xc0000da630) Data frame received for 7
+I0414 12:37:13.920533  138643 log.go:244] (0xc0008e0000) (7) Data frame handling
+I0414 12:37:13.920537  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 7
+I0414 12:37:13.920545  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 7
+Handling connection for 3000
+I0414 12:43:06.290280  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
+I0414 12:43:06.290296  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 9
+I0414 12:43:06.290977  138643 log.go:244] (0xc0000da630) Reply frame received for 9
+I0414 12:43:06.291005  138643 log.go:244] (0xc0008e0000) (9) Writing data frame
+I0414 12:43:06.291067  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
+I0414 12:43:06.291074  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 11
+I0414 12:43:06.291465  138643 log.go:244] (0xc0000da630) Reply frame received for 11
+I0414 12:43:06.291583  138643 log.go:244] (0xc0006fe000) (11) Writing data frame
+I0414 12:43:06.296151  138643 log.go:244] (0xc0000da630) Data frame received for 11
+I0414 12:43:06.296200  138643 log.go:244] (0xc0006fe000) (11) Data frame handling
+I0414 12:43:06.296220  138643 log.go:244] (0xc0006fe000) (11) Data frame sent
+I0414 12:43:06.296640  138643 log.go:244] (0xc0006fe000) (11) Writing data frame
+I0414 12:43:06.299490  138643 log.go:244] (0xc0000da630) Data frame received for 11
+I0414 12:43:06.299610  138643 log.go:244] (0xc0006fe000) (11) Data frame handling
+I0414 12:43:06.299632  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 11
+I0414 12:43:06.299640  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 11
+I0414 12:43:06.299643  138643 log.go:244] (0xc0000da630) Data frame received for 9
+I0414 12:43:06.299648  138643 log.go:244] (0xc0008e0000) (9) Data frame handling
+I0414 12:43:06.299651  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 9
+Handling connection for 3000
+I0414 12:59:54.545342  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
+I0414 12:59:54.545360  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 13
+I0414 12:59:54.545994  138643 log.go:244] (0xc0000da630) Reply frame received for 13
+I0414 12:59:54.546019  138643 log.go:244] (0xc0008e0000) (13) Writing data frame
+I0414 12:59:54.546081  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
+I0414 12:59:54.546101  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 15
+I0414 12:59:54.546590  138643 log.go:244] (0xc0000da630) Reply frame received for 15
+I0414 12:59:54.546636  138643 log.go:244] (0xc0006fe000) (15) Writing data frame
+I0414 12:59:54.550816  138643 log.go:244] (0xc0000da630) Data frame received for 15
+I0414 12:59:54.550843  138643 log.go:244] (0xc0006fe000) (15) Data frame handling
+I0414 12:59:54.550849  138643 log.go:244] (0xc0006fe000) (15) Data frame sent
+I0414 12:59:54.551299  138643 log.go:244] (0xc0006fe000) (15) Writing data frame
+I0414 12:59:54.553908  138643 log.go:244] (0xc0000da630) Data frame received for 15
+I0414 12:59:54.553923  138643 log.go:244] (0xc0006fe000) (15) Data frame handling
+I0414 12:59:54.553928  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 15
+I0414 12:59:54.553936  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 15
+I0414 12:59:54.553942  138643 log.go:244] (0xc0000da630) Data frame received for 13
+I0414 12:59:54.553945  138643 log.go:244] (0xc0008e0000) (13) Data frame handling
+I0414 12:59:54.553948  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 13
+Handling connection for 3000
+I0414 13:02:30.284613  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
+I0414 13:02:30.284629  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 17
+I0414 13:02:30.285234  138643 log.go:244] (0xc0000da630) Reply frame received for 17
+I0414 13:02:30.285269  138643 log.go:244] (0xc0006fe000) (17) Writing data frame
+I0414 13:02:30.285332  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
+I0414 13:02:30.285339  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 19
+I0414 13:02:30.286023  138643 log.go:244] (0xc0000da630) Reply frame received for 19
+I0414 13:02:30.286076  138643 log.go:244] (0xc0008e0000) (19) Writing data frame
+I0414 13:02:30.290171  138643 log.go:244] (0xc0000da630) Data frame received for 19
+I0414 13:02:30.290193  138643 log.go:244] (0xc0008e0000) (19) Data frame handling
+I0414 13:02:30.290198  138643 log.go:244] (0xc0008e0000) (19) Data frame sent
+I0414 13:02:30.290573  138643 log.go:244] (0xc0008e0000) (19) Writing data frame
+I0414 13:02:30.291583  138643 log.go:244] (0xc0000da630) Data frame received for 19
+I0414 13:02:30.291595  138643 log.go:244] (0xc0008e0000) (19) Data frame handling
+I0414 13:02:30.291600  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 19
+I0414 13:02:30.291606  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 19
+I0414 13:02:30.291621  138643 log.go:244] (0xc0000da630) Data frame received for 17
+I0414 13:02:30.291634  138643 log.go:244] (0xc0006fe000) (17) Data frame handling
+I0414 13:02:30.291645  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 17
+Forwarding from 127.0.0.1:3000 -> 3000
+Handling connection for 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Handling connection for 3000
+Handling connection for 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000

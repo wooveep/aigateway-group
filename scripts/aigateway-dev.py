@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import http.client
 import os
 import re
@@ -10,6 +11,7 @@ import shlex
 import socket
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +28,22 @@ YAML_VALUE_LINE = re.compile(r"^(?P<space>\s*)(?P<value>[^#]*?)(?P<comment>\s+#.
 RESERVED_SCALARS = {"null", "true", "false", "yes", "no", "on", "off", "~"}
 DEV_TAG_SUFFIX = re.compile(r"^(?P<base>.+?)(?:-dev-\d{14})?$")
 MYSQL_DSN_TCP = re.compile(r"@tcp\((?P<target>[^)]+)\)")
+OPTIONAL_APPS = ("console", "portal")
+APP_HELM_KEYS = {
+    "console": "aigateway-console",
+    "portal": "aigateway-portal",
+}
+APP_PORT_FORWARD_SERVICES = {
+    "console": [
+        "aigateway-console",
+        "aigateway-console-grafana",
+        "aigateway-console-loki",
+        "aigateway-console-prometheus",
+    ],
+    "portal": [
+        "aigateway-portal",
+    ],
+}
 
 
 @dataclass(frozen=True)
@@ -299,6 +317,16 @@ def normalize_components(value: object) -> list[str]:
     if isinstance(value, list):
         return [str(item).strip() for item in value if str(item).strip()]
     raise ValueError("buildComponents must be a list or comma-separated string")
+
+
+def normalize_apps(value: object) -> list[str]:
+    apps = normalize_components(value)
+    invalid = sorted(set(apps) - set(OPTIONAL_APPS))
+    if invalid:
+        raise ValueError(
+            f"Unsupported app name(s): {', '.join(invalid)}. Supported values: {', '.join(OPTIONAL_APPS)}"
+        )
+    return apps
 
 
 def load_manifest(path: Path) -> Manifest:
@@ -722,14 +750,80 @@ def env_with_overrides(*, build_components: str | None = None, minikube_profile:
     return env
 
 
-def resolve_components(manifest: Manifest, override: str | None) -> list[str]:
+def resolve_disabled_apps(args: argparse.Namespace) -> list[str]:
+    disabled_apps: list[str] = []
+    if getattr(args, "disable_apps", None):
+        disabled_apps.extend(normalize_apps(args.disable_apps))
+    if getattr(args, "core_only", False):
+        disabled_apps.extend(OPTIONAL_APPS)
+    if not disabled_apps:
+        return []
+    return sorted(set(disabled_apps))
+
+
+def resolve_components(manifest: Manifest, override: str | None, *, disabled_apps: list[str] | None = None) -> list[str]:
     if override:
         components = normalize_components(override)
     else:
         components = manifest.build_components
+    disabled_set = set(disabled_apps or [])
+    if disabled_set:
+        components = [component for component in components if component not in disabled_set]
     if not components:
         raise ValueError("No build components were resolved")
     return components
+
+
+def create_runtime_dev_config(manifest: Manifest, disabled_apps: list[str]) -> Path:
+    if not disabled_apps:
+        return manifest.dev_config_file
+
+    data = copy.deepcopy(yaml_load(manifest.dev_config_file))
+    for app in disabled_apps:
+        helm_key = APP_HELM_KEYS[app]
+        app_cfg = data.get(helm_key)
+        if not isinstance(app_cfg, dict):
+            app_cfg = {}
+            data[helm_key] = app_cfg
+        app_cfg["enabled"] = False
+
+    dev_cfg = data.get("dev")
+    if not isinstance(dev_cfg, dict):
+        dev_cfg = {}
+        data["dev"] = dev_cfg
+    pf_cfg = dev_cfg.get("portForward")
+    if not isinstance(pf_cfg, dict):
+        pf_cfg = {}
+        dev_cfg["portForward"] = pf_cfg
+
+    include_services = pf_cfg.get("includeServices")
+    if not isinstance(include_services, list):
+        include_services = []
+    skip_services = pf_cfg.get("skipServices")
+    if not isinstance(skip_services, list):
+        skip_services = []
+
+    skipped = {
+        service
+        for app in disabled_apps
+        for service in APP_PORT_FORWARD_SERVICES.get(app, [])
+    }
+    if include_services:
+        include_services = [str(service) for service in include_services if str(service) not in skipped]
+    skip_services = sorted({str(service) for service in skip_services} | skipped)
+
+    pf_cfg["includeServices"] = include_services
+    pf_cfg["skipServices"] = skip_services
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix="aigateway-dev-config.",
+        suffix=".yaml",
+        delete=False,
+    ) as handle:
+        yaml.safe_dump(data, handle, sort_keys=False)
+        return Path(handle.name)
 
 
 def maybe_refresh_tags(
@@ -738,12 +832,17 @@ def maybe_refresh_tags(
     *,
     fresh_tags: bool,
     stamp: str | None,
-) -> Manifest:
-    if not fresh_tags:
-        return manifest
+) -> tuple[Manifest, bool]:
+    if fresh_tags:
+        resolved_stamp = stamp or datetime.now().strftime("%Y%m%d%H%M%S")
+        return refresh_manifest_tags(manifest, components, resolved_stamp), True
 
-    resolved_stamp = stamp or datetime.now().strftime("%Y%m%d%H%M%S")
-    return refresh_manifest_tags(manifest, components, resolved_stamp)
+    auto_refresh_components = [component for component in components if component in OPTIONAL_APPS]
+    if not auto_refresh_components:
+        return manifest, False
+
+    resolved_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    return refresh_manifest_tags(manifest, auto_refresh_components, resolved_stamp), True
 
 
 def minikube_profile(manifest: Manifest, override: str | None) -> str:
@@ -823,15 +922,16 @@ def cmd_sync(args: argparse.Namespace, manifest: Manifest) -> int:
 
 
 def cmd_build(args: argparse.Namespace, manifest: Manifest) -> int:
-    components = resolve_components(manifest, args.components)
-    manifest = maybe_refresh_tags(
+    disabled_apps = resolve_disabled_apps(args)
+    components = resolve_components(manifest, args.components, disabled_apps=disabled_apps)
+    manifest, tags_refreshed = maybe_refresh_tags(
         manifest,
         components,
         fresh_tags=args.fresh_tags,
         stamp=args.stamp,
     )
 
-    if not args.skip_sync or args.fresh_tags:
+    if not args.skip_sync or tags_refreshed:
         rc = sync_values(manifest)
         if rc != 0:
             return rc
@@ -852,15 +952,16 @@ def cmd_minikube_start(args: argparse.Namespace, manifest: Manifest) -> int:
 
 
 def cmd_minikube_dev(args: argparse.Namespace, manifest: Manifest) -> int:
-    components = resolve_components(manifest, args.components)
-    manifest = maybe_refresh_tags(
+    disabled_apps = resolve_disabled_apps(args)
+    components = resolve_components(manifest, args.components, disabled_apps=disabled_apps)
+    manifest, tags_refreshed = maybe_refresh_tags(
         manifest,
         components,
         fresh_tags=args.fresh_tags,
         stamp=args.stamp,
     )
 
-    if not args.skip_sync or args.fresh_tags:
+    if not args.skip_sync or tags_refreshed:
         rc = sync_values(manifest)
         if rc != 0:
             return rc
@@ -869,21 +970,32 @@ def cmd_minikube_dev(args: argparse.Namespace, manifest: Manifest) -> int:
     if not args.skip_start:
         profile = ensure_minikube_started(manifest, profile)
 
+    runtime_config = create_runtime_dev_config(manifest, disabled_apps)
     env = env_with_overrides(build_components=",".join(components), minikube_profile=profile)
-    run([str(REPO_ROOT / "start.sh"), "dev-redeploy"], env=env)
+    if runtime_config != manifest.dev_config_file:
+        env["CONFIG_FILE"] = str(runtime_config)
+        print(
+            f"Using temporary dev config with disabled apps: {', '.join(disabled_apps)} -> {runtime_config}"
+        )
+    try:
+        run([str(REPO_ROOT / "start.sh"), "dev-redeploy"], env=env)
+    finally:
+        if runtime_config != manifest.dev_config_file:
+            runtime_config.unlink(missing_ok=True)
     return 0
 
 
 def cmd_minikube_tunnel(args: argparse.Namespace, manifest: Manifest) -> int:
-    components = resolve_components(manifest, args.components)
-    manifest = maybe_refresh_tags(
+    disabled_apps = resolve_disabled_apps(args)
+    components = resolve_components(manifest, args.components, disabled_apps=disabled_apps)
+    manifest, tags_refreshed = maybe_refresh_tags(
         manifest,
         components,
         fresh_tags=args.fresh_tags,
         stamp=args.stamp,
     )
 
-    if not args.skip_sync or args.fresh_tags:
+    if not args.skip_sync or tags_refreshed:
         rc = sync_values(manifest)
         if rc != 0:
             return rc
@@ -892,23 +1004,68 @@ def cmd_minikube_tunnel(args: argparse.Namespace, manifest: Manifest) -> int:
     if not args.skip_start:
         profile = ensure_minikube_started(manifest, profile)
 
+    runtime_config = create_runtime_dev_config(manifest, disabled_apps)
     env = env_with_overrides(build_components=",".join(components), minikube_profile=profile)
-    run(
-        [
-            str(REPO_ROOT / "higress" / "helm" / "redeploy-minikube.sh"),
-            "--values",
-            str(manifest.local_values_file),
-            "--namespace",
-            manifest.namespace,
-            "--release",
-            manifest.release_name,
-            "--profile",
-            profile,
-            "--components",
-            ",".join(components),
-        ],
-        env=env,
-    )
+    values_file = manifest.local_values_file
+    if runtime_config != manifest.dev_config_file:
+        env["CONFIG_FILE"] = str(runtime_config)
+        print(
+            f"Using temporary dev config with disabled apps: {', '.join(disabled_apps)} -> {runtime_config}"
+        )
+        merged_fd, merged_path = tempfile.mkstemp(prefix="aigateway-minikube-values.", suffix=".yaml")
+        os.close(merged_fd)
+        merged_values_file = Path(merged_path)
+        try:
+            merged = copy.deepcopy(yaml_load(manifest.local_values_file))
+            overlay = yaml_load(runtime_config)
+
+            def deep_merge(base: object, override: object) -> object:
+                if isinstance(base, dict) and isinstance(override, dict):
+                    merged_map = copy.deepcopy(base)
+                    for key, value in override.items():
+                        merged_map[key] = deep_merge(merged_map.get(key), value)
+                    return merged_map
+                return copy.deepcopy(override)
+
+            merged = deep_merge(merged, overlay)
+            merged_values_file.write_text(yaml.safe_dump(merged, sort_keys=False), encoding="utf-8")
+            values_file = merged_values_file
+            run(
+                [
+                    str(REPO_ROOT / "higress" / "helm" / "redeploy-minikube.sh"),
+                    "--values",
+                    str(values_file),
+                    "--namespace",
+                    manifest.namespace,
+                    "--release",
+                    manifest.release_name,
+                    "--profile",
+                    profile,
+                    "--components",
+                    ",".join(components),
+                ],
+                env=env,
+            )
+        finally:
+            runtime_config.unlink(missing_ok=True)
+            merged_values_file.unlink(missing_ok=True)
+    else:
+        run(
+            [
+                str(REPO_ROOT / "higress" / "helm" / "redeploy-minikube.sh"),
+                "--values",
+                str(values_file),
+                "--namespace",
+                manifest.namespace,
+                "--release",
+                manifest.release_name,
+                "--profile",
+                profile,
+                "--components",
+                ",".join(components),
+            ],
+            env=env,
+        )
 
     if args.start_tunnel:
         run(["minikube", "-p", profile, "tunnel"])
@@ -1177,6 +1334,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated component list. Defaults to defaults.buildComponents.",
     )
     build_parser.add_argument(
+        "--disable-apps",
+        help="Disable app image work for a comma-separated subset of: console,portal.",
+    )
+    build_parser.add_argument(
+        "--core-only",
+        action="store_true",
+        help="Equivalent to --disable-apps console,portal.",
+    )
+    build_parser.add_argument(
         "--skip-sync",
         action="store_true",
         help="Skip syncing Helm values before building images.",
@@ -1184,7 +1350,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser.add_argument(
         "--fresh-tags",
         action="store_true",
-        help="Stamp the selected image tags with a fresh local dev suffix before syncing and building.",
+        help="Stamp all selected image tags with a fresh local dev suffix before syncing and building. console/portal refresh automatically even without this flag.",
     )
     build_parser.add_argument(
         "--stamp",
@@ -1212,6 +1378,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated component list. Defaults to defaults.buildComponents.",
     )
     minikube_dev_parser.add_argument(
+        "--disable-apps",
+        help="Disable cluster apps for a comma-separated subset of: console,portal.",
+    )
+    minikube_dev_parser.add_argument(
+        "--core-only",
+        action="store_true",
+        help="Equivalent to --disable-apps console,portal.",
+    )
+    minikube_dev_parser.add_argument(
         "--skip-sync",
         action="store_true",
         help="Skip syncing Helm values before redeploying.",
@@ -1224,7 +1399,7 @@ def build_parser() -> argparse.ArgumentParser:
     minikube_dev_parser.add_argument(
         "--fresh-tags",
         action="store_true",
-        help="Stamp the selected image tags with a fresh local dev suffix before syncing and redeploying.",
+        help="Stamp all selected image tags with a fresh local dev suffix before syncing and redeploying. console/portal refresh automatically even without this flag.",
     )
     minikube_dev_parser.add_argument(
         "--stamp",
@@ -1245,6 +1420,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated component list. Defaults to defaults.buildComponents.",
     )
     minikube_tunnel_parser.add_argument(
+        "--disable-apps",
+        help="Disable cluster apps for a comma-separated subset of: console,portal.",
+    )
+    minikube_tunnel_parser.add_argument(
+        "--core-only",
+        action="store_true",
+        help="Equivalent to --disable-apps console,portal.",
+    )
+    minikube_tunnel_parser.add_argument(
         "--skip-sync",
         action="store_true",
         help="Skip syncing Helm values before redeploying.",
@@ -1262,7 +1446,7 @@ def build_parser() -> argparse.ArgumentParser:
     minikube_tunnel_parser.add_argument(
         "--fresh-tags",
         action="store_true",
-        help="Stamp the selected image tags with a fresh local dev suffix before syncing and redeploying.",
+        help="Stamp all selected image tags with a fresh local dev suffix before syncing and redeploying. console/portal refresh automatically even without this flag.",
     )
     minikube_tunnel_parser.add_argument(
         "--stamp",
