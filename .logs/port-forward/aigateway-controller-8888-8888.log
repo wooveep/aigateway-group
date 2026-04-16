@@ -16,3 +16,14 @@ Forwarding from 127.0.0.1:8888 -> 8888
 Forwarding from 127.0.0.1:8888 -> 8888
 Forwarding from 127.0.0.1:8888 -> 8888
 Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+Forwarding from 127.0.0.1:8888 -> 8888
+I0416 21:56:02.192965  179853 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:8888 -> 8888

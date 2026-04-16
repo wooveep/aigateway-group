@@ -26669,3 +26669,37 @@ Handling connection for 3306
 Handling connection for 3306
 Handling connection for 3306
 Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Handling connection for 3306
+Handling connection for 3306
+E0416 00:41:21.186964   18001 portforward.go:424] "Unhandled Error" err="an error occurred forwarding 3306 -> 3306: error forwarding port 3306 to pod 4be7f212d368da92ec3f26ec89ae4e020cac9616f8ddab2b09dcccbed114459f, uid : container not running (4be7f212d368da92ec3f26ec89ae4e020cac9616f8ddab2b09dcccbed114459f)"
+error: lost connection to pod
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Forwarding from 127.0.0.1:3306 -> 3306
+Handling connection for 3306
+I0416 21:35:01.016568  179966 log.go:244] (0xc00088a8f0) (0xc0006b0140) Create stream
+I0416 21:35:01.016623  179966 log.go:244] (0xc00088a8f0) (0xc0006b0140) Stream added, broadcasting: 1
+I0416 21:35:01.018077  179966 log.go:244] (0xc00088a8f0) Reply frame received for 1
+I0416 21:35:01.018114  179966 log.go:244] (0xc0006b0140) (1) Writing data frame
+I0416 21:35:01.018229  179966 log.go:244] (0xc00088a8f0) (0xc00071e000) Create stream
+I0416 21:35:01.018238  179966 log.go:244] (0xc00088a8f0) (0xc00071e000) Stream added, broadcasting: 3
+I0416 21:35:01.018708  179966 log.go:244] (0xc00088a8f0) Reply frame received for 3
+I0416 21:35:01.023323  179966 log.go:244] (0xc00088a8f0) Data frame received for 3
+I0416 21:35:01.023350  179966 log.go:244] (0xc00071e000) (3) Data frame handling
+I0416 21:35:01.023356  179966 log.go:244] (0xc00071e000) (3) Data frame sent
+E0416 21:35:01.023502  179966 portforward.go:404] "Unhandled Error" err="error copying from local connection to remote stream: writeto tcp4 127.0.0.1:3306->127.0.0.1:35590: read tcp4 127.0.0.1:3306->127.0.0.1:35590: read: connection reset by peer"
+I0416 21:35:01.023540  179966 log.go:244] (0xc00071e000) (3) Writing data frame
+I0416 21:35:01.023613  179966 log.go:244] (0xc00088a8f0) (0xc00071e000) Stream removed, broadcasting: 3
+I0416 21:35:01.024710  179966 log.go:244] (0xc00088a8f0) Data frame received for 1
+I0416 21:35:01.024730  179966 log.go:244] (0xc0006b0140) (1) Data frame handling
+I0416 21:35:01.024737  179966 log.go:244] (0xc00088a8f0) (0xc0006b0140) Stream removed, broadcasting: 1
+I0416 21:35:01.024769  179966 log.go:244] (0xc00088a8f0) Data frame received for 3
+I0416 21:35:01.024775  179966 log.go:244] (0xc00088a8f0) Data frame gone away for 3
+I0416 21:56:02.192282  179966 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3306 -> 3306

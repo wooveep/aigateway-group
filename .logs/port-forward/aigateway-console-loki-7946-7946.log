@@ -16,3 +16,14 @@ Forwarding from 127.0.0.1:7946 -> 7946
 Forwarding from 127.0.0.1:7946 -> 7946
 Forwarding from 127.0.0.1:7946 -> 7946
 Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946
+I0416 21:56:02.193412  179784 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:7946 -> 7946

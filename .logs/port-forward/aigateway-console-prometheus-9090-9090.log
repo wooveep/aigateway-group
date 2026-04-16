@@ -16,3 +16,20 @@ Forwarding from 127.0.0.1:9090 -> 9090
 Forwarding from 127.0.0.1:9090 -> 9090
 Forwarding from 127.0.0.1:9090 -> 9090
 Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Handling connection for 9090
+Handling connection for 9090
+Handling connection for 9090
+Handling connection for 9090
+Handling connection for 9090
+Handling connection for 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+I0416 21:56:02.193756  179832 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:9090 -> 9090

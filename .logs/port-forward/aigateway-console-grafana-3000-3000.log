@@ -120,3 +120,34 @@ Forwarding from 127.0.0.1:3000 -> 3000
 Forwarding from 127.0.0.1:3000 -> 3000
 Forwarding from 127.0.0.1:3000 -> 3000
 Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Handling connection for 3000
+I0416 21:35:01.023926  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Create stream
+I0416 21:35:01.024052  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Stream added, broadcasting: 1
+I0416 21:35:01.025532  179761 log.go:244] (0xc0005ea210) Reply frame received for 1
+I0416 21:35:01.025563  179761 log.go:244] (0xc0000b2000) (1) Writing data frame
+I0416 21:35:01.025637  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Create stream
+I0416 21:35:01.025654  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream added, broadcasting: 3
+I0416 21:35:01.026296  179761 log.go:244] (0xc0005ea210) Reply frame received for 3
+I0416 21:35:01.026428  179761 log.go:244] (0xc000977a40) (3) Writing data frame
+I0416 21:35:01.030374  179761 log.go:244] (0xc0005ea210) Data frame received for 3
+I0416 21:35:01.030404  179761 log.go:244] (0xc000977a40) (3) Data frame handling
+I0416 21:35:01.030421  179761 log.go:244] (0xc000977a40) (3) Data frame sent
+I0416 21:35:01.030754  179761 log.go:244] (0xc000977a40) (3) Writing data frame
+I0416 21:35:01.031605  179761 log.go:244] (0xc0005ea210) Data frame received for 3
+I0416 21:35:01.031670  179761 log.go:244] (0xc000977a40) (3) Data frame handling
+I0416 21:35:01.031687  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream removed, broadcasting: 3
+I0416 21:35:01.031702  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream removed, broadcasting: 3
+I0416 21:35:01.031715  179761 log.go:244] (0xc0005ea210) Data frame received for 1
+I0416 21:35:01.031721  179761 log.go:244] (0xc0000b2000) (1) Data frame handling
+I0416 21:35:01.031730  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Stream removed, broadcasting: 1
+I0416 21:56:02.192713  179761 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3000 -> 3000
