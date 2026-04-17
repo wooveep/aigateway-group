@@ -10,6 +10,11 @@ target/
 
 .playwright-cli/
 .logs/
+logs/
+*.log
+*.log.*
+tmp/
+.tmp/
 ### STS ###
 .apt_generated
 .classpath
