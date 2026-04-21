@@ -54,7 +54,7 @@ images:
     tag: "2.2.0-dev-20260419132939"
   console:
     repository: aigateway/console
-    tag: "2.2.0-dev-20260421132337"
+    tag: "2.2.0-dev-20260422064512"
   portal:
     repository: aigateway/portal
     tag: "0.2.0-dev-20260421184805"

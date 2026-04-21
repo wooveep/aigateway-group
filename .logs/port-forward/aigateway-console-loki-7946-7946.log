@@ -22,3 +22,4 @@ Forwarding from 127.0.0.1:7946 -> 7946
 Forwarding from 127.0.0.1:7946 -> 7946
 I0421 18:48:00.129077 1201369 log.go:244] frame read error: read tcp 192.168.58.1:50490->192.168.58.2:8443: use of closed network connection
 Forwarding from 127.0.0.1:7946 -> 7946
+Forwarding from 127.0.0.1:7946 -> 7946

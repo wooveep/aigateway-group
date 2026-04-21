@@ -1,6 +1,6 @@
 # AIGateway 实施任务台账
 
-更新时间：2026-04-19
+更新时间：2026-04-21
 
 ## 当前阶段
 
@@ -14,6 +14,10 @@
 - [x] P3-01 ~ P3-06 智能体产品化与 Portal AI 对话主链路
   结果：已完成 `agent_catalog` 控制面、Portal 智能体广场、`AI对话` 菜单与流式会话接口、会话持久化、模型/API Key 作用域校验、grant 到 MCP `consumerAuthInfo` 的投影，以及 Portal 全站按根目录 `DESIGN.md` 的首版风格重构。
   验证：`go test ./...`、`npm run build`、`./mvnw ... compiler:compile`、`npm run build` 已分别在 Portal 后端、Portal 前端、Console 后端、Console 前端通过。
+- [ ] P3/P5-AF 模型资产 RPM/TPM 投影到每用户每模型限流
+  结果：Console 已新增 `ai-model-rate-limit-reconcile`、`ai-model-rate-limit-projections/default`、`cluster-key-rate-limit / ai-token-ratelimit` builtin runtime 规则同步；`AI Route` 的 `modelPredicates` 已真正投影到 `x-higress-llm-model` ingress 匹配，当前只对单条 `EQUAL(model_id)` 路由自动生效，并记录 skip reason。
+  验证：`cd aigateway-console/backend && go test ./utility/clients/k8s ./internal/service/jobs ./internal/service/gateway ./internal/cmd`
+  阻塞：尚未完成 live cluster smoke，仍需在 `minikube-dev` 环境验证 fallback/internal route、429 行为和 `/system/jobs` 手工触发链路。
 
 ## 本轮不做
 
@@ -27,6 +31,9 @@
 
 ## 今日更新
 
+- `P3/P5-AF` 已完成首版实现：模型资产发布配置的 `RPM/TPM` 会按 `70%` 生成每用户每模型限流规则，`RPM -> cluster-key-rate-limit`，`TPM -> ai-token-ratelimit`，并绑定到 `AI Route` 的 public/internal/fallback ingress。
+- `P3/P5-AF` 已补控制面闭环：`gateway` 写路径新增 `ai-route-save/delete` hook，`model-binding-*` 和 `ai-route*` 变更都会触发 `ai-model-rate-limit-reconcile`；projection 资源更新后会自动同步 builtin `WasmPlugin matchRules`。
+- `P3/P5-AF` 已补测试：`AI Route modelPredicates -> x-higress-llm-model`、memory client projection sync、以及 `ai-model-rate-limit-reconcile` 的规则生成 / skip reason 都已有 Go 单测覆盖。
 - `P3-01` 已完成：Console 后端已新增 `portal_agent_catalog` 表、`AgentCatalogRecord` 模型、`/v1/ai/agent-catalog` CRUD/发布/下架接口，并固定一个 agent 绑定一个 Higress MCP Server。
 - `P3-02` 已完成：Console 前端已新增“智能体目录管理”页面，支持新建、编辑、发布/下架、授权管理以及 MCP HTTP / SSE 地址复制。
 - `P3-03` 已完成：`asset_grant` 已新增 `agent_catalog` 资产类型；保存授权时若目标 agent 已发布，会同步把 grant 展开的 consumer 名单投影到目标 MCP Server 的 `consumerAuthInfo.allowedConsumers`。

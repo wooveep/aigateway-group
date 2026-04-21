@@ -373,3 +373,4 @@ I0421 18:54:01.259357 1342217 log.go:244] (0xc000a00140) (27) Data frame handlin
 I0421 18:54:01.259359 1342217 log.go:244] (0xc0009a0bb0) (0xc00088e280) Stream removed, broadcasting: 25
 I0421 18:54:01.259363 1342217 log.go:244] (0xc0009a0bb0) (0xc000a00140) Stream removed, broadcasting: 27
 I0421 18:54:01.259366 1342217 log.go:244] (0xc0009a0bb0) (0xc000a00140) Stream removed, broadcasting: 27
+Forwarding from 127.0.0.1:9090 -> 9090

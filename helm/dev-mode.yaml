@@ -105,7 +105,7 @@ aigateway-console:
   name: aigateway-console
   image:
     repository: aigateway/console
-    tag: "2.2.0-dev-20260421132337"
+    tag: "2.2.0-dev-20260422064512"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
