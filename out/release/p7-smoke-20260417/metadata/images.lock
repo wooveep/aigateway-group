@@ -1,0 +1,12 @@
+logical|source_image|archive_name|bindings
+gateway|aigateway/gateway:2.2.0-dev-20260327030541|aigateway-gateway-2.2.0-dev-20260327030541.tar|higress-core.gateway.repository,higress-core.gateway.tag
+controller|aigateway/controller:2.2.0-dev-20260327030541|aigateway-controller-2.2.0-dev-20260327030541.tar|higress-core.controller.repository,higress-core.controller.tag
+pilot|aigateway/pilot:2.2.0-dev-20260327030541|aigateway-pilot-2.2.0-dev-20260327030541.tar|higress-core.pilot.repository,higress-core.pilot.tag
+plugin-server|aigateway/plugin-server:1.0.0-dev-20260327030541|aigateway-plugin-server-1.0.0-dev-20260327030541.tar|higress-core.pluginServer.repository,higress-core.pluginServer.tag
+console|aigateway/console:2.2.0-dev-20260416215530|aigateway-console-2.2.0-dev-20260416215530.tar|aigateway-console.image.repository,aigateway-console.image.tag
+console-certmanager|aigateway:dev-20260327030541|aigateway-dev-20260327030541.tar|aigateway-console.certmanager.image.repository,aigateway-console.certmanager.image.tag
+portal|aigateway/portal:0.2.0-dev-20260416215530|aigateway-portal-0.2.0-dev-20260416215530.tar|aigateway-portal.image.repository,aigateway-portal.image.tag
+grafana|aigateway/grafana:9.3.6|aigateway-grafana-9.3.6.tar|global.o11y.grafana.image.repository,global.o11y.grafana.image.tag
+prometheus|aigateway/prometheus:v2.40.7|aigateway-prometheus-v2.40.7.tar|global.o11y.prometheus.image.repository,global.o11y.prometheus.image.tag
+loki|aigateway/loki:2.9.4|aigateway-loki-2.9.4.tar|global.o11y.loki.image.repository,global.o11y.loki.image.tag
+promtail|aigateway/promtail:2.9.4|aigateway-promtail-2.9.4.tar|global.o11y.promtail.image.repository,global.o11y.promtail.image.tag

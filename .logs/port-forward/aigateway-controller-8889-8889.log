@@ -1,29 +1,24 @@
 Forwarding from 127.0.0.1:8889 -> 8889
 Forwarding from 127.0.0.1:8889 -> 8889
 Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-Forwarding from 127.0.0.1:8889 -> 8889
-I0416 21:56:02.192077  179854 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+I0419 13:32:38.531767 3673932 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
 error: lost connection to pod
 Forwarding from 127.0.0.1:8889 -> 8889
+I0419 14:12:28.252186 4059585 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+I0420 12:08:58.142162  825391 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+Forwarding from 127.0.0.1:8889 -> 8889
+I0421 18:54:13.053564 1342250 log.go:244] frame read error: read tcp 192.168.58.1:34938->192.168.58.2:8443: use of closed network connection

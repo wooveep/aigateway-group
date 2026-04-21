@@ -1,153 +1,49 @@
 Forwarding from 127.0.0.1:3000 -> 3000
-Handling connection for 3000
-I0414 12:36:08.501626  138643 log.go:244] (0xc0000da630) (0xc0008206e0) Create stream
-I0414 12:36:08.501708  138643 log.go:244] (0xc0000da630) (0xc0008206e0) Stream added, broadcasting: 1
-I0414 12:36:08.504429  138643 log.go:244] (0xc0000da630) Reply frame received for 1
-I0414 12:36:08.504480  138643 log.go:244] (0xc0008206e0) (1) Writing data frame
-I0414 12:36:08.504565  138643 log.go:244] (0xc0000da630) (0xc0006ff540) Create stream
-I0414 12:36:08.504584  138643 log.go:244] (0xc0000da630) (0xc0006ff540) Stream added, broadcasting: 3
-I0414 12:36:08.505083  138643 log.go:244] (0xc0000da630) Reply frame received for 3
-I0414 12:36:08.505147  138643 log.go:244] (0xc0006ff540) (3) Writing data frame
-I0414 12:36:08.509887  138643 log.go:244] (0xc0000da630) Data frame received for 3
-I0414 12:36:08.509926  138643 log.go:244] (0xc0006ff540) (3) Data frame handling
-I0414 12:36:08.509931  138643 log.go:244] (0xc0006ff540) (3) Data frame sent
-I0414 12:36:08.510358  138643 log.go:244] (0xc0006ff540) (3) Writing data frame
-I0414 12:36:08.511443  138643 log.go:244] (0xc0000da630) Data frame received for 3
-I0414 12:36:08.511478  138643 log.go:244] (0xc0006ff540) (3) Data frame handling
-I0414 12:36:08.511486  138643 log.go:244] (0xc0000da630) (0xc0006ff540) Stream removed, broadcasting: 3
-I0414 12:36:08.511493  138643 log.go:244] (0xc0000da630) (0xc0006ff540) Stream removed, broadcasting: 3
-I0414 12:36:08.511496  138643 log.go:244] (0xc0000da630) Data frame received for 1
-I0414 12:36:08.511501  138643 log.go:244] (0xc0008206e0) (1) Data frame handling
-I0414 12:36:08.511504  138643 log.go:244] (0xc0000da630) (0xc0008206e0) Stream removed, broadcasting: 1
-Handling connection for 3000
-I0414 12:37:13.912508  138643 log.go:244] (0xc0000da630) (0xc000820000) Create stream
-I0414 12:37:13.912524  138643 log.go:244] (0xc0000da630) (0xc000820000) Stream added, broadcasting: 5
-I0414 12:37:13.913378  138643 log.go:244] (0xc0000da630) Reply frame received for 5
-I0414 12:37:13.913398  138643 log.go:244] (0xc000820000) (5) Writing data frame
-I0414 12:37:13.913460  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
-I0414 12:37:13.913469  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 7
-I0414 12:37:13.914090  138643 log.go:244] (0xc0000da630) Reply frame received for 7
-I0414 12:37:13.914139  138643 log.go:244] (0xc0008e0000) (7) Writing data frame
-I0414 12:37:13.918547  138643 log.go:244] (0xc0000da630) Data frame received for 7
-I0414 12:37:13.918587  138643 log.go:244] (0xc0008e0000) (7) Data frame handling
-I0414 12:37:13.918611  138643 log.go:244] (0xc0008e0000) (7) Data frame sent
-I0414 12:37:13.919060  138643 log.go:244] (0xc0008e0000) (7) Writing data frame
-I0414 12:37:13.920167  138643 log.go:244] (0xc0000da630) Data frame received for 5
-I0414 12:37:13.920183  138643 log.go:244] (0xc000820000) (5) Data frame handling
-I0414 12:37:13.920200  138643 log.go:244] (0xc0000da630) (0xc000820000) Stream removed, broadcasting: 5
-I0414 12:37:13.920521  138643 log.go:244] (0xc0000da630) Data frame received for 7
-I0414 12:37:13.920533  138643 log.go:244] (0xc0008e0000) (7) Data frame handling
-I0414 12:37:13.920537  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 7
-I0414 12:37:13.920545  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 7
-Handling connection for 3000
-I0414 12:43:06.290280  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
-I0414 12:43:06.290296  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 9
-I0414 12:43:06.290977  138643 log.go:244] (0xc0000da630) Reply frame received for 9
-I0414 12:43:06.291005  138643 log.go:244] (0xc0008e0000) (9) Writing data frame
-I0414 12:43:06.291067  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
-I0414 12:43:06.291074  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 11
-I0414 12:43:06.291465  138643 log.go:244] (0xc0000da630) Reply frame received for 11
-I0414 12:43:06.291583  138643 log.go:244] (0xc0006fe000) (11) Writing data frame
-I0414 12:43:06.296151  138643 log.go:244] (0xc0000da630) Data frame received for 11
-I0414 12:43:06.296200  138643 log.go:244] (0xc0006fe000) (11) Data frame handling
-I0414 12:43:06.296220  138643 log.go:244] (0xc0006fe000) (11) Data frame sent
-I0414 12:43:06.296640  138643 log.go:244] (0xc0006fe000) (11) Writing data frame
-I0414 12:43:06.299490  138643 log.go:244] (0xc0000da630) Data frame received for 11
-I0414 12:43:06.299610  138643 log.go:244] (0xc0006fe000) (11) Data frame handling
-I0414 12:43:06.299632  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 11
-I0414 12:43:06.299640  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 11
-I0414 12:43:06.299643  138643 log.go:244] (0xc0000da630) Data frame received for 9
-I0414 12:43:06.299648  138643 log.go:244] (0xc0008e0000) (9) Data frame handling
-I0414 12:43:06.299651  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 9
-Handling connection for 3000
-I0414 12:59:54.545342  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
-I0414 12:59:54.545360  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 13
-I0414 12:59:54.545994  138643 log.go:244] (0xc0000da630) Reply frame received for 13
-I0414 12:59:54.546019  138643 log.go:244] (0xc0008e0000) (13) Writing data frame
-I0414 12:59:54.546081  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
-I0414 12:59:54.546101  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 15
-I0414 12:59:54.546590  138643 log.go:244] (0xc0000da630) Reply frame received for 15
-I0414 12:59:54.546636  138643 log.go:244] (0xc0006fe000) (15) Writing data frame
-I0414 12:59:54.550816  138643 log.go:244] (0xc0000da630) Data frame received for 15
-I0414 12:59:54.550843  138643 log.go:244] (0xc0006fe000) (15) Data frame handling
-I0414 12:59:54.550849  138643 log.go:244] (0xc0006fe000) (15) Data frame sent
-I0414 12:59:54.551299  138643 log.go:244] (0xc0006fe000) (15) Writing data frame
-I0414 12:59:54.553908  138643 log.go:244] (0xc0000da630) Data frame received for 15
-I0414 12:59:54.553923  138643 log.go:244] (0xc0006fe000) (15) Data frame handling
-I0414 12:59:54.553928  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 15
-I0414 12:59:54.553936  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 15
-I0414 12:59:54.553942  138643 log.go:244] (0xc0000da630) Data frame received for 13
-I0414 12:59:54.553945  138643 log.go:244] (0xc0008e0000) (13) Data frame handling
-I0414 12:59:54.553948  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 13
-Handling connection for 3000
-I0414 13:02:30.284613  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Create stream
-I0414 13:02:30.284629  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream added, broadcasting: 17
-I0414 13:02:30.285234  138643 log.go:244] (0xc0000da630) Reply frame received for 17
-I0414 13:02:30.285269  138643 log.go:244] (0xc0006fe000) (17) Writing data frame
-I0414 13:02:30.285332  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Create stream
-I0414 13:02:30.285339  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream added, broadcasting: 19
-I0414 13:02:30.286023  138643 log.go:244] (0xc0000da630) Reply frame received for 19
-I0414 13:02:30.286076  138643 log.go:244] (0xc0008e0000) (19) Writing data frame
-I0414 13:02:30.290171  138643 log.go:244] (0xc0000da630) Data frame received for 19
-I0414 13:02:30.290193  138643 log.go:244] (0xc0008e0000) (19) Data frame handling
-I0414 13:02:30.290198  138643 log.go:244] (0xc0008e0000) (19) Data frame sent
-I0414 13:02:30.290573  138643 log.go:244] (0xc0008e0000) (19) Writing data frame
-I0414 13:02:30.291583  138643 log.go:244] (0xc0000da630) Data frame received for 19
-I0414 13:02:30.291595  138643 log.go:244] (0xc0008e0000) (19) Data frame handling
-I0414 13:02:30.291600  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 19
-I0414 13:02:30.291606  138643 log.go:244] (0xc0000da630) (0xc0008e0000) Stream removed, broadcasting: 19
-I0414 13:02:30.291621  138643 log.go:244] (0xc0000da630) Data frame received for 17
-I0414 13:02:30.291634  138643 log.go:244] (0xc0006fe000) (17) Data frame handling
-I0414 13:02:30.291645  138643 log.go:244] (0xc0000da630) (0xc0006fe000) Stream removed, broadcasting: 17
-Forwarding from 127.0.0.1:3000 -> 3000
-Handling connection for 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Handling connection for 3000
-Handling connection for 3000
 Forwarding from 127.0.0.1:3000 -> 3000
 Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Forwarding from 127.0.0.1:3000 -> 3000
-Handling connection for 3000
-I0416 21:35:01.023926  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Create stream
-I0416 21:35:01.024052  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Stream added, broadcasting: 1
-I0416 21:35:01.025532  179761 log.go:244] (0xc0005ea210) Reply frame received for 1
-I0416 21:35:01.025563  179761 log.go:244] (0xc0000b2000) (1) Writing data frame
-I0416 21:35:01.025637  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Create stream
-I0416 21:35:01.025654  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream added, broadcasting: 3
-I0416 21:35:01.026296  179761 log.go:244] (0xc0005ea210) Reply frame received for 3
-I0416 21:35:01.026428  179761 log.go:244] (0xc000977a40) (3) Writing data frame
-I0416 21:35:01.030374  179761 log.go:244] (0xc0005ea210) Data frame received for 3
-I0416 21:35:01.030404  179761 log.go:244] (0xc000977a40) (3) Data frame handling
-I0416 21:35:01.030421  179761 log.go:244] (0xc000977a40) (3) Data frame sent
-I0416 21:35:01.030754  179761 log.go:244] (0xc000977a40) (3) Writing data frame
-I0416 21:35:01.031605  179761 log.go:244] (0xc0005ea210) Data frame received for 3
-I0416 21:35:01.031670  179761 log.go:244] (0xc000977a40) (3) Data frame handling
-I0416 21:35:01.031687  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream removed, broadcasting: 3
-I0416 21:35:01.031702  179761 log.go:244] (0xc0005ea210) (0xc000977a40) Stream removed, broadcasting: 3
-I0416 21:35:01.031715  179761 log.go:244] (0xc0005ea210) Data frame received for 1
-I0416 21:35:01.031721  179761 log.go:244] (0xc0000b2000) (1) Data frame handling
-I0416 21:35:01.031730  179761 log.go:244] (0xc0005ea210) (0xc0000b2000) Stream removed, broadcasting: 1
-I0416 21:56:02.192713  179761 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+I0419 13:32:38.532221 3673789 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
 error: lost connection to pod
+Forwarding from 127.0.0.1:3000 -> 3000
+I0419 14:12:28.252289 4059462 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Handling connection for 3000
+I0419 15:51:57.068185  405872 log.go:244] (0xc0005aa0b0) (0xc00065c000) Create stream
+I0419 15:51:57.068271  405872 log.go:244] (0xc0005aa0b0) (0xc00065c000) Stream added, broadcasting: 1
+I0419 15:51:57.069432  405872 log.go:244] (0xc0005aa0b0) Reply frame received for 1
+I0419 15:51:57.069455  405872 log.go:244] (0xc00065c000) (1) Writing data frame
+I0419 15:51:57.069500  405872 log.go:244] (0xc0005aa0b0) (0xc00052c000) Create stream
+I0419 15:51:57.069505  405872 log.go:244] (0xc0005aa0b0) (0xc00052c000) Stream added, broadcasting: 3
+I0419 15:51:57.069724  405872 log.go:244] (0xc0005aa0b0) Reply frame received for 3
+I0419 15:51:57.069763  405872 log.go:244] (0xc00052c000) (3) Writing data frame
+I0419 15:51:57.070316  405872 log.go:244] (0xc0005aa0b0) Data frame received for 1
+I0419 15:51:57.070328  405872 log.go:244] (0xc00065c000) (1) Data frame handling
+I0419 15:51:57.070332  405872 log.go:244] (0xc00065c000) (1) Data frame sent
+I0419 15:51:57.070336  405872 log.go:244] (0xc0005aa0b0) Data frame received for 1
+I0419 15:51:57.070339  405872 log.go:244] (0xc00065c000) (1) Data frame handling
+I0419 15:51:57.070343  405872 log.go:244] (0xc0005aa0b0) (0xc00065c000) Stream removed, broadcasting: 1
+I0419 15:51:57.070363  405872 log.go:244] (0xc0005aa0b0) Data frame received for 3
+I0419 15:51:57.070368  405872 log.go:244] (0xc00052c000) (3) Data frame handling
+I0419 15:51:57.070374  405872 log.go:244] (0xc0005aa0b0) (0xc00052c000) Stream removed, broadcasting: 3
+E0419 15:51:57.070436  405872 portforward.go:424] "Unhandled Error" err="an error occurred forwarding 3000 -> 3000: error forwarding port 3000 to pod 64179e53a37da0a796e8a1c6c7c5294c8c13d76cda8331df5f5a1319604b2b7d, uid : Error response from daemon: No such container: 64179e53a37da0a796e8a1c6c7c5294c8c13d76cda8331df5f5a1319604b2b7d"
+I0419 15:51:57.070445  405872 log.go:244] (0xc0005aa0b0) (0xc00065c000) Stream removed, broadcasting: 1
+I0419 15:51:57.070449  405872 log.go:244] (0xc0005aa0b0) (0xc00052c000) Stream removed, broadcasting: 3
+I0419 15:51:57.070509  405872 log.go:244] (0xc0005aa0b0) (0xc00052c000) Stream removed, broadcasting: 3
+I0419 15:51:57.070567  405872 log.go:244] frame read error: read tcp 192.168.58.1:36608->192.168.58.2:8443: use of closed network connection
+error: lost connection to pod
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+I0420 12:08:58.142114  825251 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from 127.0.0.1:3000 -> 3000
+I0421 17:43:24.847811  978491 log.go:244] frame read error: read tcp 192.168.58.1:52822->192.168.58.2:8443: use of closed network connection
+Forwarding from 127.0.0.1:3000 -> 3000
+I0421 18:48:00.129406 1201332 log.go:244] frame read error: read tcp 192.168.58.1:50438->192.168.58.2:8443: use of closed network connection
 Forwarding from 127.0.0.1:3000 -> 3000

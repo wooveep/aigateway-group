@@ -1,5 +1,17 @@
 # AIGateway Group - 待办清单
 
+## P0（2026-04-18 本地环境修复 / 模型资产发布 / Console 自动化验证）
+
+- [ ] 回补 `minikube-dev` 运行时修复到仓库配置，至少覆盖：
+  - console 构建默认 `plugins.properties` 来源；
+  - `mcpServer.redis.password` 的配置下发；
+  - `ai-proxy.internal` WasmPlugin 的模块 URL / 版本来源一致性。
+- [ ] 修复 Console 后端布尔列 / 整型 SQL 混用问题，至少覆盖：
+  - `POST /v1/ai/model-assets/:assetId/bindings/:bindingId/publish`
+  - `POST /v1/ai/model-assets/:assetId/bindings/:bindingId/unpublish`
+  - `portaldb` 旧表迁移 SQL 中的 `deleted BOOLEAN` 判断。
+- [ ] 为 Console 前端补自动化点击验证，覆盖本地启动后核心页面可访问与关键入口打开链路。
+
 ## P2（2026-04-09 收口：AI路由 / 模型资产 / AI脱敏）
 
 - [x] AI 路由“目标AI服务/降级服务”改为按 `provider` 选择，目标模型候选只来自该 Provider 下已发布 `model_binding`。
@@ -80,7 +92,7 @@
 - [x] 明确根级文档与子项目文档的职责分工。
 - [x] 统一根级 Helm/启动入口：`start.sh`、`helm/dev-mode.yaml`、`scripts/port-forward-all.py`、`helm/README.md`。
 - [x] 完成 `aigateway-console` 到 `aigateway-console` 的父 Chart 编排对齐（启停键统一为 `aigateway-console.enabled`）。
-- [x] 将 Portal/Console MySQL 统一收敛到 `higress-core`，并切换到新配置路径 `higress-core.mysql.mysql.*`。
+- [x] 将 Portal/Console PostgreSQL 统一收敛到 `higress-core`，并切换到新配置路径 `higress-core.postgresql.*`。
 - [x] `aigateway-portal` 默认端口调整为 `8081`，并在集成 values 中关闭 ingress。
 - [x] 修复 `./start.sh dev` 首次部署时 `port-forward` 因 Pod Pending 直接失败的问题（增加 ready endpoint 等待）。
 - [x] 修复父 Chart 脚本中 `aigateway-console` / `aigateway-console` 键读取不一致问题（`build-local-images.sh`、`redeploy-minikube.sh`）。
@@ -153,7 +165,7 @@
   结果：补充了中英文文案、占位符、帮助信息，并把前端 `pricing.currency` 类型收敛为 `CNY`。
 
 #### 2. Provider 保存后同步 Portal 模型价格
-- [x] 新增 Console -> Portal MySQL 模型价格同步服务。
+- [x] 新增 Console -> Portal PostgreSQL 模型价格同步服务。
   结果：新增 `PortalModelPricingJdbcService`，可直接将 Provider 元数据和定价持久化到 Portal 的 `billing_model_*` 表。
 - [x] Provider 保存后 upsert `billing_model_catalog`。
   结果：Provider 新增和编辑都会同步 upsert `billing_model_catalog`，并在删除时将对应模型置为 `disabled`。
@@ -165,10 +177,10 @@
   结果：后端已强制要求 `portalModelMeta.pricing` 存在且为 `CNY` + 输入/输出价格必填；前端 `npm run build` 通过，当前环境无 `mvn`，暂无法补 Maven 编译验证。
 
 #### 3. Portal 模型价格主链收口
-- [x] Portal 模型读取优先改为 MySQL `billing_model_*`。
+- [x] Portal 模型读取优先改为 PostgreSQL `billing_model_*`。
   结果：Portal 模型列表、详情和价格加载已优先读取 `billing_model_catalog + billing_model_price_version`，不再从旧 `portal_model_catalog` 反推主价格。
 - [x] Gateway `portalModelMeta` 回填逻辑降级为 fallback。
-  结果：Gateway 只在 `billing_model_*` 为空时作为回填来源，正常读路径已经收口到 MySQL。
+  结果：Gateway 只在 `billing_model_*` 为空时作为回填来源，正常读路径已经收口到 PostgreSQL。
 - [x] 模型无有效价格时标记为不可计费。
   结果：同步模型目录时会把输入/输出价格都缺失的模型标记为 `disabled`，并关闭其 active 价格版本，避免进入计费链路。
 - [x] 清理旧 `portal_model_catalog` 与新价格表的职责边界。
@@ -190,11 +202,11 @@
 - [x] 下线“充值金额折 token 再写 Redis quota”的旧逻辑。
   结果：旧的 `quota_recharge.go` token 折算链路已删除，充值不再把金额折算为 token 写入 Redis。
 - [x] 充值只写 `portal_recharge_order + billing_transaction(recharge) + billing_wallet`。
-  结果：`CreateRecharge` 现在只写充值单、充值流水和钱包余额，账务主链完全以 MySQL 钱包/流水为准。
+  结果：`CreateRecharge` 现在只写充值单、充值流水和钱包余额，账务主链完全以 PostgreSQL 钱包/流水为准。
 - [x] 充值成功后同步 Redis 用户余额。
   结果：充值成功后会立即把最新钱包余额投影到 `billing:balance:{consumer}`，供金额模式 `ai-quota` 实时准入。
 - [x] 校验 Portal 余额只来自钱包和流水。
-  结果：Billing 概览、消费明细和开放平台金额统计都已经基于 `billing_wallet + billing_transaction` 聚合，不再依赖 token 配额或 Prometheus 反推余额。
+  结果：Billing 概览、消费明细和开放平台金额统计都已经基于 `billing_wallet + billing_transaction` 聚合，不再依赖 token 配额或 Prometheus 反推余额，账务主链以 PostgreSQL 账本为准。
 
 #### 6. ai-quota 金额模式与请求跟踪
 - [x] Console `ai-quota` 页面按金额模式适配标题、文案、余额交互和说明。
@@ -261,10 +273,10 @@
   结果：`success + parsed` 事件会落 `billing_usage_event`、生成 `billing_transaction(consume)`、更新 `billing_wallet`，并同步刷新 `portal_api_key` 调用统计。
 - [x] 失败/拒绝事件只写请求记录
   结果：`failed/rejected` 事件现在只写请求审计记录，不再误生成扣费流水或改动钱包余额。
-- [x] 启动时 MySQL -> Redis 全量回灌余额、价格、配额策略
+- [x] 启动时 PostgreSQL -> Redis 全量回灌余额、价格、配额策略
   结果：Portal 启动和周期同步都会把钱包余额、模型价格、用户限额策略、Key 限额策略以及当前窗口用量回灌到 Redis。
 - [x] 增加定时 reconcile 任务修正 Redis 漂移
-  结果：现有 billing sync 周期任务已承担 Redis runtime reconcile 角色，持续把 MySQL 真相源投影回运行态缓存以修正漂移。
+  结果：现有 billing sync 周期任务已承担 Redis runtime reconcile 角色，持续把 PostgreSQL 真相源投影回运行态缓存以修正漂移。
 
 #### 11. Prometheus 降级与对账
 - [x] 移除 Portal 对 Prometheus 的主链依赖
@@ -290,7 +302,7 @@
 - [x] Provider 定价保存后，Portal 模型价格立即可见
   结果：已为 Console `PortalModelPricingJdbcService` 增加 JDBC 单测，并通过容器内 Maven 定向跑通，验证 Provider 保存时会立刻写入 `billing_model_catalog / billing_model_price_version`；结合 Portal 现有 DB 优先读链路，保存后模型价格可立即被 Portal 读取。
 - [x] Prometheus 关闭时，成功请求仍产生消费记录
-  结果：已新增可选 MySQL 集成测试，并在临时 MySQL 容器中实跑验证：`PORTAL_CORE_PROMETHEUS_URL` 为空时，成功消费仍会写入 `billing_usage_event`、`billing_transaction` 和 `billing_wallet`，Prometheus 仅作为对账链路。
+  结果：已新增可选 PostgreSQL 集成测试，并在临时 PostgreSQL 容器中实跑验证：`PORTAL_CORE_PROMETHEUS_URL` 为空时，成功消费仍会写入 `billing_usage_event`、`billing_transaction` 和 `billing_wallet`，Prometheus 仅作为对账链路。
 - [x] User/Key 窗口限额生效
   结果：已为 `ai-quota` 增加 amount 模式窗口超限单测，验证 User 日窗口超限时会被插件直接拒绝。
 - [x] 过期/禁用/软删除 Key 立即失效
@@ -323,7 +335,7 @@
   结果：前后端保存时都已自动根据 `cache` 标签写入 `supports_prompt_caching`，不再单独编辑。
 - [x] Provider 保存时物化价格回退链，不在运行态做浮点回退
   结果：Console JDBC 同步与 Portal gateway 同步都已按保存时物化的方式回填生效价格，并修正 `1h` 缓存价格回退顺序为“显式值 -> 输入价 * 2 -> 5m 缓存价”。
-- [x] 扩展 Portal MySQL `billing_model_price_version` 价格列
+- [x] 扩展 Portal PostgreSQL `billing_model_price_version` 价格列
   结果：已补齐 request fee、cache、`above_200k`、image token/image count 相关列，并在 Portal/Console 两侧建表与补列逻辑中同步。
 - [x] 扩展 Redis `billing:model-price:*` 运行态价格投影
   结果：Portal runtime projection 已把完整价格 hash 投影到 Redis，`ai-quota` / `ai-token-ratelimit` amount 模式都读取同一套字段。
@@ -350,7 +362,7 @@
 - [x] 扩展 `ai-statistics` 指标、ai_log、span，记录缓存分桶/图像/请求计数
   结果：`ai-statistics` 已新增缓存创建/读取、图像 token、图像数量、`request_count`、`cache_ttl` 的 user attribute、span attribute 和 metric 输出。
 - [x] Portal `/v1/portal/stats/usage` 改为账务表聚合细分用量
-  结果：Console `PortalUsageStatsService` 已切到 Portal MySQL 账务表聚合，并返回缓存/图像细分列。
+  结果：Console `PortalUsageStatsService` 已切到 Portal PostgreSQL 账务表聚合，并返回缓存/图像细分列。
 - [x] 修复 AI Dashboard X 轴时间显示异常（全部显示 `8AM`）
   结果：NativeDashboard 已改为按真实时间戳格式化，修复统一显示 `8AM` 的问题。
 - [x] 精简 AI Dashboard toolbar，仅保留时间范围/自动刷新/立即刷新
@@ -441,7 +453,7 @@
 #### P1 组织与授权底座
 
 - [x] P1-01 设计组织树、子部门、子账号归属领域模型（Portal/Console）
-  结果：已落地 `org_department`、`org_account_membership` 领域模型与根部门初始化逻辑，固定“每个账号最多一个直属父账号、最多一个所属部门、父子账号只做管理归属不做权限继承”的规则，并同步进入 Portal/Console 共享 MySQL。
+  结果：已落地 `org_department`、`org_account_membership` 领域模型与根部门初始化逻辑，固定“每个账号最多一个直属父账号、最多一个所属部门、父子账号只做管理归属不做权限继承”的规则，并同步进入 Portal/Console 共享 PostgreSQL。
 - [x] P1-02 废弃 `portal_user.department` 并切换到新组织字段（Portal/Console）
   结果：已按“不考虑兼容”方案执行，Portal 注册请求移除 `department`，登录态 `AuthUser` 改为返回 `departmentId`、`departmentName`、`departmentPath`、`parentConsumerName`；Console 与 Portal 均不再读写旧 `portal_user.department` 作为组织真相源，现有账号统一通过 membership 进入“未分配部门、无父账号”状态。
 - [x] P1-03 设计 `asset_grant` 授权模型（Portal/Console）

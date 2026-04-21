@@ -33,10 +33,13 @@
     - 用于本地开发环境构建、启动、redeploy 和端口暴露。
   - `aigateway-project-status`
     - 用于读取当前阶段、进行中任务、阻塞项、近期更新和下一步。
+  - `aigateway-higress-context`
+    - 用于说明 Higress 参数配置、`higress-config`、Helm values、Ingress/ConfigMap/WasmPlugin/McpBridge 等对象落点，以及 Portal/Console 通过 API、K8s 资源、服务发现与 Higress 交互的方式。
 - 使用优先级约定：
   - 问“该看哪里 / 该改哪个模块”时，优先用 `aigateway-project-orientation`。
   - 问“怎么启动 / 怎么本地联调 / 用什么命令跑起来”时，优先用 `aigateway-dev-environment`。
   - 问“现在做到哪 / 当前阶段 / 下一步做什么”时，优先用 `aigateway-project-status`。
+  - 问“Higress 怎么配 / Console 或 Portal 底层对应哪些 Higress 对象 / CRD 或服务发现应该改哪里 / AI Route、Provider、MCP、Service Source 底层怎么落”时，优先用 `aigateway-higress-context`。
 - 这类项目级 skill 必须优先引用根目录文档和仓库内脚本，不应脱离仓库上下文给出泛化回答。
 - 当根目录协作规则、开发入口或阶段状态结构发生稳定变化时，需要同步更新相关 skill。
 
@@ -51,10 +54,10 @@
 
 ### 4.2 共库策略（Portal + Console）
 
-- Portal 需要支持与 AIGateway Console 共用同一 MySQL。
-- Portal 后端数据库配置优先级：
-  1. `PORTAL_MYSQL_*`
-  2. 回退 `HIGRESS_PORTAL_DB_*`
+- Portal 与 AIGateway Console 固定共用同一 PostgreSQL。
+- Portal 后端数据库配置项目标准：
+  1. `PORTAL_DB_*`
+  2. 回退 `PORTAL_CORE_DB_*` / `HIGRESS_PORTAL_DB_*`（仅用于存量兼容，不再作为新配置路径）
 - 共库变更约束：
   - 禁止无迁移方案的破坏性变更。
   - 表结构与索引调整必须有回滚方案。
@@ -105,17 +108,16 @@
 
 ### 7.3 数据库归属与配置契约
 
-- Portal/Console 共用的 MySQL 由 `higress-core` 统一启动和管理。
-- MySQL 新配置路径为：`higress-core.mysql.mysql.*`。
+- Portal/Console 共用的 PostgreSQL 由 `higress-core` 统一启动和管理。
+- PostgreSQL 配置路径为：`higress-core.postgresql.*`。
 - 关键字段：
-  - `higress-core.mysql.mysql.enabled`
-  - `higress-core.mysql.mysql.name`
-  - `higress-core.mysql.mysql.repository`
-  - `higress-core.mysql.mysql.tag`
+  - `higress-core.postgresql.enabled`
+  - `higress-core.postgresql.fullnameOverride`
 - 集成场景下：
-  - `aigateway-portal.mysql.enabled=false`
-  - `aigateway-portal.database.host=mysql-server`
-  - `aigateway-console.portalDatabase.host=mysql-server`
+  - `aigateway-portal.database.driver=postgres`
+  - `aigateway-portal.database.host=aigateway-core-postgresql-pgpool`
+  - `aigateway-console.portalDatabase.driver=postgres`
+  - `aigateway-console.portalDatabase.host=aigateway-core-postgresql-pgpool`
 
 ### 7.4 网络暴露策略
 

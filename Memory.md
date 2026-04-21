@@ -1,5 +1,52 @@
 # AIGateway Group - 协作记忆
 
+## 2026-04-19
+
+### 当前数据库口径更新
+
+- 项目数据库基线已固定为 PostgreSQL-only，不再把 MySQL 作为当前开发、部署或文档口径。
+- 根级 `Project.md`、`task.md`、`TODO.md`、`helm/README.md`，以及 Portal/Console 项目文档和项目级 skill，已统一切换为 PostgreSQL 配置与共享库表述。
+- 当前标准配置路径为：
+  - Portal/Console 共享库连接：`PORTAL_DB_*`
+  - Helm/父 Chart：`higress-core.postgresql.*`
+  - 集成服务地址：`aigateway-core-postgresql-pgpool:5432`
+- 本文件下方若仍出现 MySQL 相关描述，均视为历史迁移记录，不再代表当前项目规范。
+
+## 2026-04-18
+
+### 本次目标
+
+- 将本地 `minikube-dev` 启动过程中暴露出的运行时修复固化回仓库，避免每次启动后再手工修补 `ConfigMap / WasmPlugin / 构建参数`。
+- 修复 Console 模型资产“发布绑定”接口在 PostgreSQL 下的 SQL 类型错误。
+- 为 Console 前端补一轮自动化点击验证，覆盖至少 `console` 可访问性和核心页面打开链路。
+
+### 当前问题记录
+
+- 本地环境启动问题：
+  - `build-local-images.sh` 默认要求 `aigateway-console/backend/resource/public/plugin/plugins.properties`，当前仓库缺该文件，实际只能依赖 `plugin-server/plugins.properties` 绕过。
+  - `higress-config` 的 `mcpServer.redis` 自动补地址但未补密码，`gateway` 启动后会因 Redis `NOAUTH` 卡在 readiness。
+  - 内置 `ai-proxy.internal` WasmPlugin 资源未带可用 `spec.url`，且资源标签版本与 `plugin-server` 中实际插件目录版本不一致，导致 `gateway` 初始化阶段报 `cannot fetch Wasm module oci:: could not parse reference`。
+- 模型资产发布绑定问题：
+  - `POST /v1/ai/model-assets/{assetId}/bindings/{bindingId}/publish` 返回 `ERROR: operator does not exist: boolean = integer (SQLSTATE 42883)`，说明当前发布 SQL 在 PostgreSQL 上仍混用了布尔列与整型值比较。
+- 同类问题扫描结果：
+  - `aigateway-console/backend/internal/service/portal/assets.go`
+    - `portal_model_binding_price_version.active` 为 `BOOLEAN`，当前发布/下架 SQL 使用了 `active = 1/0`，这是已复现问题的直接根因。
+  - `aigateway-console/backend/internal/service/portal/ai_sensitive.go`
+    - `portal_ai_sensitive_detect_rule.enabled`、`portal_ai_sensitive_replace_rule.restore/enabled`、`portal_ai_sensitive_system_config.system_deny_enabled` 都是 `BOOLEAN`，服务层不仅按 `0/1` 写入，部分读取路径也仍按 `int` 扫描。
+  - `aigateway-console/backend/internal/service/portal/ai_quota.go`
+    - `portal_ai_quota_schedule_rule.enabled` 为 `BOOLEAN`，定时额度规则的保存和列表读取都混用了 `bool/int` 语义。
+  - `aigateway-console/backend/utility/clients/portaldb/migrations.go`
+    - 旧表迁移 SQL 中对 `portal_users.deleted`、`org_departments.deleted` 仍写成 `COALESCE(..., 0) = 1/0`，在 PostgreSQL 上同样存在布尔与整型比较风险。
+  - 现有若干 MySQL 风格测试 SQL 也写成了 `enabled = 1`，测试数据层面暂未触发生产问题，但后续若迁到 PostgreSQL 契约测试需一并收口。
+- 前端验证问题：
+  - Console 当前缺少针对核心页面的自动化点击验证，导致这类运行时配置和页面交互问题只能靠手工回归发现。
+
+### 处理约束
+
+- 运行时修复优先回补到 Helm values、构建脚本或控制面资源生成逻辑，不保留“启动后手工 patch 集群”的隐式步骤。
+- 模型资产发布链路修复后，需要补最小后端测试覆盖 PostgreSQL 兼容行为。
+- 前端自动化验证优先复用现有本地开发环境，对 Console 页面做黑盒点击校验，不引入只验证静态 HTML 的伪测试。
+
 ## 2026-04-09
 
 ### 本次目标
@@ -455,3 +502,82 @@
   - 模型绑定授权负责模型可见性和后续模型范围约束。
   - AI 路由授权负责运行时请求准入。
 - 本轮不改 AI 路由运行时协议，绑定引用只保存在 Console 自定义注解中。
+
+## 2026-04-18：minikube ingress 自动收集 gateway 域名
+
+### 本次改动
+
+- `start.sh`
+  - `minikube-dev` 的 `/etc/hosts` 同步逻辑不再只写 `console.<baseDomain>` 和 `portal.<baseDomain>`。
+  - 新增从 `aigateway-system` 下 `higress.io/config-map-type=domain` 的 ConfigMap 动态读取业务域名的逻辑。
+  - 会把 `domain-api.ai.local -> api.ai.local` 这类 Higress domain 配置对应的真实访问域名一并映射到当前 minikube IP。
+  - `show_minikube_ingress_access` 会额外输出这些 gateway 域名，并根据 `enableHttps` 显示 `http/https`。
+- `helm/README.md`
+  - 补充 `minikube-dev` 会自动同步 gateway 业务域名到 `/etc/hosts` 的说明。
+
+### 解决的问题
+
+- 之前 `minikube-dev` 只暴露了 console/portal 的 ingress 域名，用户通过 Console 创建的 gateway 业务域名虽然已经存在于 `domain-*` ConfigMap 中，但本机不会自动解析到 minikube gateway。
+- 结果是 gateway `80/443` 实际可达，但像 `api.ai.local` 这样的真实业务域名不能直接访问，需要手工改 `/etc/hosts`。
+
+### 验证结果
+
+- 已在运行中的集群确认存在：
+  - `domain-api.ai.local` -> `api.ai.local`
+- `bash -n start.sh` 通过。
+
+### 决策记录
+
+- gateway 对外域名的真相源继续保持为 Higress `domain` 类型 ConfigMap，而不是在 `start.sh` 中维护静态域名列表。
+- `/etc/hosts` 自动同步仅处理显式域名；通配符域名继续跳过，因为 hosts 文件不支持 `*.example.com` 这类映射。
+
+## 2026-04-18：AI Provider 预置从 Doubao 收口到 Volcengine Ark
+
+### 本次改动
+
+- Higress `ai-proxy` 新增正式 provider 类型 `volcengine`，默认对接火山引擎方舟 `ark.cn-beijing.volces.com/api/v3`。
+- 删除 Console 新建入口和 Higress runtime 配置中的 `doubao` 正式预置，前端只暴露 `volcengine`。
+- Console provider 表单新增火山专属高级配置：
+  - `Base URL`
+  - `X-Client-Request-Id`
+  - 会话加密开关
+  - `X-Fornax-Trace`
+  - `retryOnFailure`
+- 读取存量 `doubao` 配置时会兼容映射为 `volcengine`，再次保存后统一写回 `volcengine`。
+
+### 决策记录
+
+- `doubao` 不再作为独立 provider 类型继续维护，火山能力统一以 `volcengine` 命名对外暴露。
+- 不额外做迁移脚本，采用“读兼容、写收口”的渐进迁移方式。
+- 本轮只支持 API Key 鉴权，不引入 AK/SK 到临时 API Key 的额外流程。
+
+## 2026-04-19：模型价格单位统一为“外部元/百万 tokens，内部微元/token”
+
+### 本次改动
+
+- Console 和 Portal 对外价格字段统一收口为 `元 / 百万 tokens`：
+  - `inputCostPerMillionTokens`
+  - `outputCostPerMillionTokens`
+  - 以及对应的 cache / image token 价格字段
+- Portal 计费运行时、数据库持久化、Redis 投影统一收口为 `微元 / token`：
+  - `*_micro_yuan_per_token`
+- `ai-quota` 与 `ai-token-ratelimit` 插件改为优先读取新的 `*_micro_yuan_per_token` Redis key，并继续兼容旧的 `*_per_1k_micro_yuan`。
+- `billing_model_price_version` 建表与自动补列逻辑已新增 `*_micro_yuan_per_token` 列，同时保留旧 `per_1k` 列作为兼容镜像。
+
+### 决策记录
+
+- 业务真源单位固定为 `微元 / token`，避免运行时和账务链路里继续传播小数。
+- 前端配置和展示保留 `元 / 百万 tokens`，仅作为外部可读写口径；进出后端时做换算。
+- 旧 `per_1k` 单位不再作为主语义，只保留兼容读写：
+  - 新链路写 `micro_yuan_per_token`
+  - 同时镜像写 `per_1k_micro_yuan`
+  - 旧数据仍可通过 `per_1k` 回读
+
+### 验证结果
+
+- `go test ./internal/service/portal/...`：`aigateway-portal/backend` 通过。
+- `go test ./internal/service/portal/...`：`aigateway-console/backend` 通过。
+- `go test ./...`：`higress/plugins/wasm-go/extensions/ai-quota` 通过。
+- `go test ./...`：`higress/plugins/wasm-go/extensions/ai-token-ratelimit` 通过。
+- `npm run build`：`aigateway-console/frontend` 通过。
+- `npm ci && npm run build`：`aigateway-portal/frontend` 通过。

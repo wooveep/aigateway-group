@@ -10,6 +10,8 @@ REDEPLOY_MINIKUBE_SCRIPT="${ROOT_DIR}/higress/helm/redeploy-minikube.sh"
 REDEPLOY_K3D_SCRIPT="${ROOT_DIR}/higress/helm/redeploy-k3d.sh"
 BUILD_SCRIPT="${ROOT_DIR}/higress/helm/build-local-images.sh"
 PORT_FORWARD_SCRIPT="${ROOT_DIR}/scripts/port-forward-all.sh"
+RELEASE_BUILD_SCRIPT="${ROOT_DIR}/scripts/release-build.sh"
+RELEASE_DEPLOY_SCRIPT="${ROOT_DIR}/scripts/release-deploy.sh"
 
 resolve_repo_path() {
   local candidate="$1"
@@ -47,6 +49,13 @@ DEFAULT_MINIKUBE_DRIVER="$(manifest_scalar minikube.driver docker)"
 DEFAULT_MINIKUBE_CPUS="$(manifest_scalar minikube.cpus 4)"
 DEFAULT_MINIKUBE_MEMORY="$(manifest_scalar minikube.memory 8192)"
 DEFAULT_MINIKUBE_DISK_SIZE="$(manifest_scalar minikube.diskSize 20g)"
+DEFAULT_MINIKUBE_INGRESS_BASE_DOMAIN="$(manifest_scalar minikube.ingressBaseDomain ai.local)"
+DEFAULT_RELEASE_OUTPUT_DIR="$(resolve_repo_path "$(manifest_scalar release.outputDir out/release)")"
+DEFAULT_RELEASE_BUNDLE_NAME="$(manifest_scalar release.bundleName aigateway-release)"
+DEFAULT_RELEASE_BASE_VALUES="$(resolve_repo_path "$(manifest_scalar release.baseValuesFile higress/helm/higress/values-release-base.yaml)")"
+DEFAULT_RELEASE_HA_VALUES="$(resolve_repo_path "$(manifest_scalar release.haValuesFile higress/helm/higress/values-release-ha.yaml)")"
+DEFAULT_RELEASE_UPSTREAMS_VALUES="$(resolve_repo_path "$(manifest_scalar release.upstreamsValuesFile higress/helm/higress/values-release-upstreams.yaml)")"
+DEFAULT_RELEASE_PROFILE="$(manifest_scalar release.profile ha)"
 
 CHART_DIR="${CHART_DIR:-${DEFAULT_CHART_DIR}}"
 CONFIG_FILE="${CONFIG_FILE:-${DEFAULT_DEV_CONFIG}}"
@@ -59,6 +68,13 @@ MINIKUBE_DRIVER="${MINIKUBE_DRIVER:-${DEFAULT_MINIKUBE_DRIVER}}"
 MINIKUBE_CPUS="${MINIKUBE_CPUS:-${DEFAULT_MINIKUBE_CPUS}}"
 MINIKUBE_MEMORY="${MINIKUBE_MEMORY:-${DEFAULT_MINIKUBE_MEMORY}}"
 MINIKUBE_DISK_SIZE="${MINIKUBE_DISK_SIZE:-${DEFAULT_MINIKUBE_DISK_SIZE}}"
+MINIKUBE_INGRESS_BASE_DOMAIN="${MINIKUBE_INGRESS_BASE_DOMAIN:-${DEFAULT_MINIKUBE_INGRESS_BASE_DOMAIN}}"
+RELEASE_OUTPUT_DIR="${RELEASE_OUTPUT_DIR:-${DEFAULT_RELEASE_OUTPUT_DIR}}"
+RELEASE_BUNDLE_NAME="${RELEASE_BUNDLE_NAME:-${DEFAULT_RELEASE_BUNDLE_NAME}}"
+RELEASE_BASE_VALUES="${RELEASE_BASE_VALUES:-${DEFAULT_RELEASE_BASE_VALUES}}"
+RELEASE_HA_VALUES="${RELEASE_HA_VALUES:-${DEFAULT_RELEASE_HA_VALUES}}"
+RELEASE_UPSTREAMS_VALUES="${RELEASE_UPSTREAMS_VALUES:-${DEFAULT_RELEASE_UPSTREAMS_VALUES}}"
+RELEASE_PROFILE="${RELEASE_PROFILE:-${DEFAULT_RELEASE_PROFILE}}"
 
 if [[ -d "${CHART_DIR}" ]]; then
   CHART_DIR="$(cd -- "${CHART_DIR}" && pwd -P)"
@@ -69,6 +85,11 @@ fi
 if [[ -f "${LOCAL_VALUES_FILE}" ]]; then
   LOCAL_VALUES_FILE="$(cd -- "$(dirname -- "${LOCAL_VALUES_FILE}")" && pwd -P)/$(basename "${LOCAL_VALUES_FILE}")"
 fi
+for release_file_var in RELEASE_BASE_VALUES RELEASE_HA_VALUES RELEASE_UPSTREAMS_VALUES; do
+  if [[ -f "${!release_file_var}" ]]; then
+    printf -v "${release_file_var}" '%s' "$(cd -- "$(dirname -- "${!release_file_var}")" && pwd -P)/$(basename "${!release_file_var}")"
+  fi
+done
 
 DEFAULT_PROD_VALUES_FILE="${CHART_DIR}/values-production-k3d.yaml"
 if [[ ! -f "${DEFAULT_PROD_VALUES_FILE}" ]]; then
@@ -333,14 +354,147 @@ run_minikube_start() {
   done < <(yaml_get_list "${MANIFEST_FILE}" "minikube.addons")
 }
 
+minikube_current_ip() {
+  dev_need_cmd minikube
+  minikube -p "${MINIKUBE_PROFILE}" ip
+}
+
+create_minikube_ingress_override() {
+  local base_domain="$1"
+  local override_file
+  local console_host="console.${base_domain}"
+  local portal_host="portal.${base_domain}"
+
+  override_file="$(mktemp "${ROOT_DIR}/.tmp-minikube-ingress.XXXXXX.yaml")"
+  cat > "${override_file}" <<EOF
+aigateway-console:
+  ingress:
+    enabled: true
+    domain: ${console_host}
+    paths:
+      - path: /
+        pathType: Prefix
+
+aigateway-portal:
+  ingress:
+    enabled: true
+    className: aigateway
+    host: ${portal_host}
+    path: /
+    pathType: Prefix
+EOF
+  printf '%s\n' "${override_file}"
+}
+
+list_minikube_gateway_domains() {
+  if ! command -v kubectl >/dev/null 2>&1; then
+    return 0
+  fi
+
+  kubectl get configmap \
+    --namespace "${NAMESPACE}" \
+    -l "higress.io/config-map-type=domain,higress.io/resource-definer=higress" \
+    -o jsonpath='{range .items[*]}{.data.domain}{"\t"}{.data.enableHttps}{"\n"}{end}' 2>/dev/null \
+    | awk -F '\t' '
+      {
+        domain = $1
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", domain)
+        if (domain != "") {
+          print domain "\t" $2
+        }
+      }
+    ' \
+    | sort -u
+}
+
+sync_minikube_ingress_hosts() {
+  local minikube_ip="$1"
+  local base_domain="$2"
+  local console_host="console.${base_domain}"
+  local portal_host="portal.${base_domain}"
+  local marker_begin="# >>> aigateway minikube ingress >>>"
+  local marker_end="# <<< aigateway minikube ingress <<<"
+  local managed_block
+  local tmp_hosts
+  local gateway_hosts=()
+  local domain
+  local gateway_count
+
+  while IFS=$'\t' read -r domain _; do
+    [[ -z "${domain}" || "${domain}" == \** ]] && continue
+    gateway_hosts+=("${domain}")
+  done < <(list_minikube_gateway_domains)
+
+  managed_block="${marker_begin}"$'\n'"${minikube_ip} ${console_host} ${portal_host}"
+  if ((${#gateway_hosts[@]} > 0)); then
+    managed_block+=$'\n'"${minikube_ip} ${gateway_hosts[*]}"
+  fi
+  managed_block+=$'\n'"${marker_end}"
+  gateway_count="${#gateway_hosts[@]}"
+
+  if [[ -w /etc/hosts ]]; then
+    tmp_hosts="$(mktemp)"
+    awk -v begin="${marker_begin}" -v end="${marker_end}" '
+      $0 == begin { skip = 1; next }
+      $0 == end { skip = 0; next }
+      !skip { print }
+    ' /etc/hosts > "${tmp_hosts}"
+    printf '\n%s\n' "${managed_block}" >> "${tmp_hosts}"
+    cat "${tmp_hosts}" > /etc/hosts
+    rm -f "${tmp_hosts}"
+    if ((gateway_count > 0)); then
+      echo "[ingress] Updated /etc/hosts for ${console_host}, ${portal_host}, and ${gateway_count} gateway domain(s)"
+    else
+      echo "[ingress] Updated /etc/hosts for ${console_host} and ${portal_host}"
+    fi
+    return 0
+  fi
+
+  echo "[WARN] /etc/hosts is not writable. Add this entry manually:"
+  printf '       %s\n' "${minikube_ip} ${console_host} ${portal_host}"
+  if ((${#gateway_hosts[@]} > 0)); then
+    printf '       %s\n' "${minikube_ip} ${gateway_hosts[*]}"
+  fi
+}
+
+show_minikube_ingress_access() {
+  local minikube_ip="$1"
+  local base_domain="$2"
+  local console_host="console.${base_domain}"
+  local portal_host="portal.${base_domain}"
+  local domain
+  local enable_https
+  local scheme
+
+  echo "[ingress] Console: http://${console_host}"
+  echo "[ingress] Portal : http://${portal_host}"
+  while IFS=$'\t' read -r domain enable_https; do
+    [[ -z "${domain}" ]] && continue
+    scheme="http"
+    if [[ -n "${enable_https}" && "${enable_https}" != "off" ]]; then
+      scheme="https"
+    fi
+    echo "[ingress] Gateway: ${scheme}://${domain}"
+  done < <(list_minikube_gateway_domains)
+  echo "[ingress] Gateway IP: http://${minikube_ip}"
+  echo "[port-forward] Console: http://127.0.0.1:8080"
+  echo "[port-forward] Portal : http://127.0.0.1:8081"
+}
+
 run_minikube_dev() {
   local components_csv="$1"
   local skip_start="$2"
+  local minikube_ip
+  local ingress_override
+  local args
 
   dev_stage deploy "Redeploying dev profile via minikube shell flow."
+  minikube_ip="$(minikube_current_ip)"
+  ingress_override="$(create_minikube_ingress_override "${MINIKUBE_INGRESS_BASE_DOMAIN}")"
   args=(
     --values "${LOCAL_VALUES_FILE}"
     --extra-values "${CONFIG_FILE}"
+    --extra-values "${ingress_override}"
     --namespace "${NAMESPACE}"
     --release "${RELEASE_NAME}"
     --components "${components_csv}"
@@ -349,7 +503,10 @@ run_minikube_dev() {
     args+=(--profile "${MINIKUBE_PROFILE}")
   fi
   "${REDEPLOY_MINIKUBE_SCRIPT}" "${args[@]}"
+  rm -f "${ingress_override}"
 
+  sync_minikube_ingress_hosts "${minikube_ip}" "${MINIKUBE_INGRESS_BASE_DOMAIN}"
+  show_minikube_ingress_access "${minikube_ip}" "${MINIKUBE_INGRESS_BASE_DOMAIN}"
   run_port_forward
 }
 
@@ -408,6 +565,16 @@ show_port_forward_config() {
   done < <(yaml_get_list "${CONFIG_FILE}" "dev.portForward.includeServices")
 }
 
+show_release_config() {
+  echo "Release"
+  echo "  outputDir    : ${RELEASE_OUTPUT_DIR}"
+  echo "  bundleName   : ${RELEASE_BUNDLE_NAME}"
+  echo "  profile      : ${RELEASE_PROFILE}"
+  echo "  baseValues   : ${RELEASE_BASE_VALUES}"
+  echo "  haValues     : ${RELEASE_HA_VALUES}"
+  echo "  upstreams    : ${RELEASE_UPSTREAMS_VALUES}"
+}
+
 cmd_show() {
   local component
 
@@ -425,6 +592,7 @@ cmd_show() {
   echo "  cpus         : ${MINIKUBE_CPUS}"
   echo "  memory       : ${MINIKUBE_MEMORY}"
   echo "  diskSize     : ${MINIKUBE_DISK_SIZE}"
+  show_release_config
   echo "Images"
   while IFS= read -r component; do
     [[ -z "${component}" ]] && continue
@@ -435,6 +603,36 @@ cmd_show() {
     fi
   done < <(csv_to_lines "${BUILD_COMPONENTS}")
   show_port_forward_config
+}
+
+cmd_release_build() {
+  dev_stage check "Verifying release bundle build dependencies."
+  dev_need_cmd docker
+  dev_need_cmd helm
+  "${RELEASE_BUILD_SCRIPT}" \
+    --bundle-name "${RELEASE_BUNDLE_NAME}" \
+    --output-dir "${RELEASE_OUTPUT_DIR}" \
+    --profile "${RELEASE_PROFILE}" \
+    --chart-dir "${CHART_DIR}" \
+    --namespace "${NAMESPACE}" \
+    --release "${RELEASE_NAME}" \
+    --base-values "${RELEASE_BASE_VALUES}" \
+    --ha-values "${RELEASE_HA_VALUES}" \
+    --upstreams-values "${RELEASE_UPSTREAMS_VALUES}" \
+    --components "${BUILD_COMPONENTS}" \
+    "$@"
+}
+
+cmd_release_deploy() {
+  dev_stage check "Verifying release deploy dependencies."
+  dev_need_cmd docker
+  dev_need_cmd helm
+  "${RELEASE_DEPLOY_SCRIPT}" \
+    --bundle-dir "${RELEASE_OUTPUT_DIR}/${RELEASE_BUNDLE_NAME}" \
+    --release "${RELEASE_NAME}" \
+    --namespace "${NAMESPACE}" \
+    --profile "${RELEASE_PROFILE}" \
+    "$@"
 }
 
 cmd_sync() {
@@ -678,6 +876,8 @@ Usage:
   ./start.sh show
   ./start.sh sync [--check] [--components a,b] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
   ./start.sh build [--components a,b] [--skip-sync] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
+  ./start.sh release-build [release-build args...]
+  ./start.sh release-deploy [release-deploy args...]
   ./start.sh minikube-start [--profile name]
   ./start.sh minikube-dev [--components a,b] [--skip-sync] [--skip-start] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
   ./start.sh minikube-tunnel [--components a,b] [--skip-sync] [--skip-start] [--start-tunnel] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
@@ -696,6 +896,7 @@ Notes:
   - Preferred local dev entrypoint: ./start.sh
   - helm/image-versions.yaml is the single source of truth for local image tags and defaults.
   - console and portal refresh dev tags automatically for build/minikube flows.
+  - Release entrypoints are pure shell: ./start.sh release-build / ./start.sh release-deploy
 EOF
 }
 
@@ -712,6 +913,12 @@ main() {
       ;;
     build)
       cmd_build "$@"
+      ;;
+    release-build)
+      cmd_release_build "$@"
+      ;;
+    release-deploy)
+      cmd_release_deploy "$@"
       ;;
     minikube-start)
       cmd_minikube_start "$@"

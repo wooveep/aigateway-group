@@ -161,9 +161,9 @@ def validate_dev_port_forward() -> list[str]:
         "aigateway-console-prometheus",
         "aigateway-controller",
         "aigateway-plugin-server",
+        "aigateway-core-postgresql-pgpool",
         "aigateway-portal",
-        "mysql-server",
-        "redis-stack-server",
+        "redis-server",
     ]
     if include_services != expected_services:
         errors.append(
@@ -175,7 +175,7 @@ def validate_dev_port_forward() -> list[str]:
     expected_ports = {
         "aigateway-console": {"8080": 8080},
         "aigateway-console-grafana": {"3000": 3000},
-        "aigateway-console-loki": {"3100": 3100, "7946": 7946, "9095": 9095},
+        "aigateway-console-loki": {"3100": 3100, "9095": 9095},
         "aigateway-console-prometheus": {"9090": 9090},
         "aigateway-controller": {
             "443": 15443,
@@ -187,9 +187,9 @@ def validate_dev_port_forward() -> list[str]:
             "15051": 15051,
         },
         "aigateway-plugin-server": {"80": 18080},
+        "aigateway-core-postgresql-pgpool": {"5432": 5432},
         "aigateway-portal": {"8081": 8081},
-        "mysql-server": {"3306": 3306},
-        "redis-stack-server": {"6379": 6379},
+        "redis-server": {"6379": 6379},
     }
     if service_ports != expected_ports:
         errors.append(

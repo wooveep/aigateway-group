@@ -15,6 +15,8 @@ Default to these scripts:
 
 - `./start.sh`
 - `./scripts/port-forward-all.sh`
+- `./scripts/release-build.sh`
+- `./scripts/release-deploy.sh`
 
 Use `./start.sh` as the recommended top-level local dev CLI.
 
@@ -29,6 +31,8 @@ When you need more context, inspect these files in this order:
 3. `./helm/image-versions.yaml`
 4. `./helm/dev-mode.yaml`
 5. `./scripts/port-forward-all.sh`
+6. `./scripts/release-build.sh`
+7. `./scripts/release-deploy.sh`
 
 Treat `./helm/image-versions.yaml` as the single source of truth for:
 
@@ -48,6 +52,12 @@ Treat `./higress/helm/higress/values-local-minikube.yaml` as the source of truth
 
 - local minikube LoadBalancer / tunnel exposure
 - the minikube-specific Helm values profile used by `minikube-tunnel`
+
+Treat these files as the source of truth for release packaging and deployment:
+
+- `./higress/helm/higress/values-release-base.yaml`
+- `./higress/helm/higress/values-release-ha.yaml`
+- `./higress/helm/higress/values-release-upstreams.yaml`
 
 ## Preferred workflows
 
@@ -140,6 +150,22 @@ By default the dev config exposes:
 - `aigateway-console` to local `8080`
 - `aigateway-portal` to local `8081`
 
+### Build a release bundle
+
+Use this when the user wants a portable release artifact:
+
+```bash
+./start.sh release-build
+```
+
+### Deploy a release bundle
+
+Use this when the user wants release-style install for `k3d` or generic `k8s`:
+
+```bash
+./start.sh release-deploy --target k8s --registry registry.example.com/team
+```
+
 ## Command selection rules
 
 - If the user says “启动开发环境” or “把项目跑起来”, prefer `./start.sh minikube-dev`.
@@ -148,6 +174,8 @@ By default the dev config exposes:
 - If the user says “第一次启动”, “冷启动”, or asks what to run first, prefer `./start.sh show`, then `./start.sh minikube-dev`.
 - If the user says “只看端口” or “本地访问 console/portal”, prefer `./start.sh port-forward`.
 - If the user mentions LoadBalancer or `minikube tunnel`, prefer `./start.sh minikube-tunnel --start-tunnel`.
+- If the user says “打发布包”, “产出镜像 tar”, or “准备离线部署包”, prefer `./start.sh release-build`.
+- If the user says “部署到 k3d” or “部署到通用 k8s”, prefer `./start.sh release-deploy`.
 
 ## When To Use Which Command
 
@@ -155,6 +183,8 @@ By default the dev config exposes:
 - Use `./start.sh build` when the user only wants fresh local images, or wants to verify image build success before redeploying.
 - Use `./start.sh minikube-dev` when the user wants the normal local development environment ready for console/portal access.
 - Use `./start.sh minikube-tunnel --start-tunnel` when the user explicitly wants LoadBalancer exposure through Minikube.
+- Use `./start.sh release-build` when the user needs a portable release bundle.
+- Use `./start.sh release-deploy` when the user already has a bundle and wants `k3d` / `k8s` install.
 - Use `./start.sh dev` or `./start.sh dev-redeploy` only when the user explicitly asks for the old command or when you need compatibility behavior.
 
 ## Useful flags
@@ -165,6 +195,9 @@ By default the dev config exposes:
 - `--profile <name>`: override the minikube profile from the manifest
 - `--fresh-tags`: stamp selected image tags with a fresh local dev suffix
 - `--stamp YYYYMMDDHHMMSS`: provide an explicit suffix with `--fresh-tags`
+- `--target k3d|k8s`: choose the release deploy target
+- `--registry <host[/prefix]>`: required for `release-deploy --target k8s`
+- `--replicas gateway=3,controller=2,pluginServer=2,console=2,portal=2`: override release replica counts
 
 Rules for fresh tags:
 
@@ -177,5 +210,7 @@ Rules for fresh tags:
 - Before running expensive commands, check the user's intent and choose the narrowest matching workflow.
 - If a command fails, inspect the failing script or related config file before inventing a new manual workaround.
 - When the user asks “how is this project started?”, answer from `./start.sh minikube-dev` first.
+- When the user asks about release packaging, answer from `./start.sh release-build` / `./start.sh release-deploy` first.
 - Mention that `./start.sh dev` and `./start.sh dev-redeploy` still exist, but as compatibility commands.
 - When you need repo documentation, read `./helm/README.md`; do not duplicate large sections into the response.
+- Be explicit that the project database path is PostgreSQL-only and already has PostgreSQL smoke coverage for shared schema, legacy migration, and core runtime SQL, but do not overstate full end-to-end release validation when `k3d` / registry-backed deploy checks have not been run in the current environment.

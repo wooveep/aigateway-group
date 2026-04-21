@@ -1,0 +1,15 @@
+aigateway-console:
+  ingress:
+    enabled: true
+    domain: console.ai.local
+    paths:
+      - path: /
+        pathType: Prefix
+
+aigateway-portal:
+  ingress:
+    enabled: true
+    className: aigateway
+    host: portal.ai.local
+    path: /
+    pathType: Prefix

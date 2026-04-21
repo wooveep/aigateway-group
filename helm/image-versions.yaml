@@ -25,30 +25,39 @@ minikube:
   cpus: 4
   memory: 8192
   diskSize: 20g
+  ingressBaseDomain: ai.local
   addons:
     - metrics-server
+
+release:
+  outputDir: out/release
+  bundleName: aigateway-release
+  baseValuesFile: higress/helm/higress/values-release-base.yaml
+  haValuesFile: higress/helm/higress/values-release-ha.yaml
+  upstreamsValuesFile: higress/helm/higress/values-release-upstreams.yaml
+  profile: ha
 
 images:
   # Kept in sync with aigateway-console.certmanager.image.* because the
   # existing local build flow still resolves the "aigateway" image from there.
   aigateway:
     repository: aigateway
-    tag: "dev-20260327030541"
+    tag: dev-20260419132939
   controller:
     repository: aigateway/controller
-    tag: "2.2.0-dev-20260327030541"
+    tag: "2.2.0-dev-20260419132939"
   gateway:
     repository: aigateway/gateway
-    tag: "2.2.0-dev-20260327030541"
+    tag: "2.2.0-dev-20260419132939"
   pilot:
     repository: aigateway/pilot
-    tag: "2.2.0-dev-20260327030541"
+    tag: "2.2.0-dev-20260419132939"
   console:
     repository: aigateway/console
-    tag: "2.2.0-dev-20260416215530"
+    tag: "2.2.0-dev-20260421132337"
   portal:
     repository: aigateway/portal
-    tag: "0.2.0-dev-20260416215530"
+    tag: "0.2.0-dev-20260421184805"
   plugin-server:
     repository: aigateway/plugin-server
-    tag: "1.0.0-dev-20260327030541"
+    tag: "1.0.0-dev-20260419132939"

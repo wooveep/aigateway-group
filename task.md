@@ -1,6 +1,6 @@
 # AIGateway 实施任务台账
 
-更新时间：2026-04-10
+更新时间：2026-04-19
 
 ## 当前阶段
 
@@ -44,7 +44,8 @@
 - `P0-04` 已完成：固化“平台底座优先、MCP 型智能体、两档模型定价、根目录三文档主控”默认实施假设。
 - `P0-05` 已完成：完成当前能力对比与插件改造矩阵，明确重点插件范围。
 - `P0-06` 已完成：已新增项目级 skill，覆盖“仓库导览 / 开发环境启动 / 当前阶段状态读取”，并将使用边界写入 `Project.md` 团队约定。
-- `P1-01` 已完成：Portal/Console 共用 MySQL 已新增 `org_department`、`org_account_membership`，并在启动时自动创建虚拟根部门和未分配 membership。
+- `P1-01` 已完成：Portal/Console 共用 PostgreSQL 已新增 `org_department`、`org_account_membership`，并在启动时自动创建虚拟根部门和未分配 membership。
+- 文档/skill 口径更新：根级文档、Portal/Console 项目文档与项目级 skill 已统一更新为 PostgreSQL-only；历史 MySQL 表述仅保留在迁移记录中。
 - `P1-02` 已完成：按“无兼容路径”方案移除 Portal 注册页的 `department` 输入，Portal 登录态改为返回 `departmentId`、`departmentName`、`departmentPath`、`parentConsumerName`。
 - `P1-03` 已完成：Console 已新增 `asset_grant` 表服务、资产授权管理接口与 `AuthorizationSubjectResolver` 授权展开逻辑。
 - `P1-04` 已完成：Console 已新增 `/v1/org/*` 接口，并将 `/consumer` 页面重构为组织树、部门管理、账号创建编辑和父账号分配视图。

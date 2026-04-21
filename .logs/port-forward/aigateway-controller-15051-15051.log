@@ -1,29 +1,25 @@
 Forwarding from 127.0.0.1:15051 -> 15051
 Forwarding from 127.0.0.1:15051 -> 15051
 Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-Forwarding from 127.0.0.1:15051 -> 15051
-I0416 21:56:02.194214  179855 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+I0419 13:32:38.531793 3673933 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
 error: lost connection to pod
 Forwarding from 127.0.0.1:15051 -> 15051
+I0419 14:12:28.252040 4059586 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+I0420 12:08:58.141938  825392 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+I0421 17:43:24.847958  978619 log.go:244] frame read error: read tcp 192.168.58.1:52958->192.168.58.2:8443: use of closed network connection
+Forwarding from 127.0.0.1:15051 -> 15051
+Forwarding from 127.0.0.1:15051 -> 15051
+I0421 18:54:13.053323 1342251 log.go:244] frame read error: read tcp 192.168.58.1:34950->192.168.58.2:8443: use of closed network connection

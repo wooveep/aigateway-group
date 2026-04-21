@@ -1,29 +1,23 @@
 Forwarding from 127.0.0.1:3100 -> 3100
 Forwarding from 127.0.0.1:3100 -> 3100
 Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-Forwarding from 127.0.0.1:3100 -> 3100
-I0416 21:56:02.192615  179782 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+I0419 13:32:38.540289 3673828 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
 error: lost connection to pod
+Forwarding from 127.0.0.1:3100 -> 3100
+I0419 14:12:28.252235 4059495 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+I0420 12:08:58.142644  825291 log.go:244] frame read error: websocket: close 1006 (abnormal closure): unexpected EOF
+error: lost connection to pod
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
+Forwarding from 127.0.0.1:3100 -> 3100
 Forwarding from 127.0.0.1:3100 -> 3100
