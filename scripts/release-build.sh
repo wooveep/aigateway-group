@@ -115,7 +115,7 @@ append_known_binding() {
   fi
 }
 
-build_images_lock() {
+build_known_bindings() {
   {
     append_known_binding "gateway" "higress-core.gateway.repository" "higress-core.gateway.tag"
     append_known_binding "controller" "higress-core.controller.repository" "higress-core.controller.tag"
@@ -129,6 +129,36 @@ build_images_lock() {
     append_known_binding "loki" "global.o11y.loki.image.repository" "global.o11y.loki.image.tag"
     append_known_binding "promtail" "global.o11y.promtail.image.repository" "global.o11y.promtail.image.tag"
   } | awk -F'|' '!seen[$2]++'
+}
+
+logical_name_from_image() {
+  local image="$1"
+  local repo_part
+  repo_part="${image%%:*}"
+  printf '%s' "${repo_part##*/}" | tr -c 'A-Za-z0-9._-' '-'
+}
+
+build_images_lock_from_rendered() {
+  local known_bindings="$1"
+  shift
+  local image row logical source_image archive_name bindings
+  for image in "$@"; do
+    row=""
+    while IFS= read -r candidate; do
+      [[ -n "${candidate}" ]] || continue
+      IFS='|' read -r logical source_image archive_name bindings <<< "${candidate}"
+      if [[ "${source_image}" == "${image}" ]]; then
+        row="${candidate}"
+        break
+      fi
+    done <<< "${known_bindings}"
+
+    if [[ -n "${row}" ]]; then
+      printf '%s\n' "${row}"
+    else
+      printf '%s|%s|%s|\n' "$(logical_name_from_image "${image}")" "${image}" "$(sanitize_image_archive_name "${image}")"
+    fi
+  done
 }
 
 extract_rendered_images() {
@@ -250,14 +280,13 @@ fi
 dev_stage deploy "Rendering release manifests to resolve bundle image set."
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "+ helm template ${RELEASE_NAME} ${CHART_DIR} ${HELM_VALUES_ARGS[*]} ${EXTRA_HELM_SET_ARGS[*]}"
-  mapfile -t RENDERED_IMAGES < <(build_images_lock | awk -F'|' '{print $2}')
-else
-  mapfile -t RENDERED_IMAGES < <(extract_rendered_images)
 fi
+mapfile -t RENDERED_IMAGES < <(extract_rendered_images)
 
 [[ ${#RENDERED_IMAGES[@]} -gt 0 ]] || dev_die "No images rendered for release bundle."
 
-LOCK_CONTENT="$(build_images_lock)"
+KNOWN_BINDINGS="$(build_known_bindings)"
+LOCK_CONTENT="$(build_images_lock_from_rendered "${KNOWN_BINDINGS}" "${RENDERED_IMAGES[@]}")"
 LOCK_FILE_CONTENT="logical|source_image|archive_name|bindings"$'\n'"${LOCK_CONTENT}"
 
 if [[ "${DRY_RUN}" != "true" ]]; then

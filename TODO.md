@@ -1,5 +1,17 @@
 # AIGateway Group - 待办清单
 
+> 文档职责：本文件只维护执行清单、完成状态和待办账本。  
+> 当前状态看 `task.md`，历史原因看 `Memory.md`，发布 / 部署专项任务看 `TASK/README.md`。
+
+## P0（2026-04-22 文档整编 / 1.0.0 正式交付）
+
+- [x] 收口根级文档职责边界，明确研发 / 产品主控与发布 / 部署主控两条主线。
+- [x] 更新 `AGENTS.md` 为仓库唯一 agent 协作规则入口，写清读取优先级、正式约束和同步要求。
+- [x] 建立 `docs/` 正式文档源码目录，补齐 `1.0.0` 白皮书、发布说明、镜像包说明、部署说明和用户手册 Markdown 真相源。
+- [x] 基于 `1.0.0` 环境补齐 Portal + Console 用户手册截图，并输出到 `output/manual/1.0.0/`。
+- [x] 产出 Docx / PDF 正式交付件并完成链接、图片、导出校验。
+- [x] 修复 `release-build` 中 `images.lock` 与 bundle `images/*.tar` 不一致的问题，确保正式 bundle 可用于后续 `release-deploy`。
+
 ## P0（2026-04-18 本地环境修复 / 模型资产发布 / Console 自动化验证）
 
 - [ ] 回补 `minikube-dev` 运行时修复到仓库配置，至少覆盖：

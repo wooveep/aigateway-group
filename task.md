@@ -1,6 +1,9 @@
 # AIGateway 实施任务台账
 
-更新时间：2026-04-21
+> 文档职责：本文件只记录“当前进行中、阻塞项、最近更新、最近验证”。  
+> 稳定边界看 `Project.md`，执行清单看 `TODO.md`，发布 / 部署台账看 `TASK/README.md`。
+
+更新时间：2026-04-22
 
 ## 当前阶段
 
@@ -31,6 +34,12 @@
 
 ## 今日更新
 
+- 根文档体系已收口为“研发 / 产品主控”与“发布 / 部署主控”两条主线，并以 `AGENTS.md` 固化读取顺序和同步规则。
+- 已建立正式 `docs/` 文档源码目录，承载 `1.0.0` 白皮书、发布说明和用户手册。
+- `1.0.0` 正式版本规则已固定：仓库管理的一方镜像统一使用 `1.0.0`，第三方依赖通过 bundle 与 Helm values 锁定。
+- 已基于真实 `1.0.0` 运行环境补齐 Portal + Console 页面截图，正式截图统一落在 `output/manual/1.0.0/`。
+- 已新增 `scripts/export-formal-docs.py`，将 `docs/` 下 5 份正式文档导出到 `out/docs/1.0.0/` 的 HTML / Docx / PDF 交付件。
+- 已修复 `scripts/release-build.sh` 的 bundle 锁文件生成逻辑，当前 `out/release/aigateway-1.0.0/metadata/images.lock` 与 `images/*.tar` 已保持一致。
 - `P3/P5-AF` 已完成首版实现：模型资产发布配置的 `RPM/TPM` 会按 `70%` 生成每用户每模型限流规则，`RPM -> cluster-key-rate-limit`，`TPM -> ai-token-ratelimit`，并绑定到 `AI Route` 的 public/internal/fallback ingress。
 - `P3/P5-AF` 已补控制面闭环：`gateway` 写路径新增 `ai-route-save/delete` hook，`model-binding-*` 和 `ai-route*` 变更都会触发 `ai-model-rate-limit-reconcile`；projection 资源更新后会自动同步 builtin `WasmPlugin matchRules`。
 - `P3/P5-AF` 已补测试：`AI Route modelPredicates -> x-higress-llm-model`、memory client projection sync、以及 `ai-model-rate-limit-reconcile` 的规则生成 / skip reason 都已有 Go 单测覆盖。
@@ -100,3 +109,7 @@
 - 已执行 `npm run build`，`aigateway-portal/frontend` 的全站 `DESIGN.md` 风格壳层、智能体广场和 `AI对话` 页面通过生产构建。
 - 已执行 `./mvnw -q -pl console -am -DskipTests -Dpmd.skip=true compiler:compile`，`aigateway-console/backend` 的 `agent-catalog` 控制器、JDBC service 和 grant -> MCP 授权投影代码可编译通过。
 - 已执行 `npm run build`，`aigateway-console/frontend` 的“智能体目录管理”菜单、页面、授权抽屉和地址复制功能通过生产构建。
+- 已执行 `./start.sh help`、`./start.sh show`、`./start.sh sync --check`、`./start.sh release-build --dry-run`、`./start.sh release-deploy --target k8s --bundle-dir out/release/aigateway-1.0.0 --registry registry.example.com/team --dry-run`，`1.0.0` 正式发布链路可完成命令级校验。
+- 已执行 `helm template aigateway ./helm/higress -f ./higress/helm/higress/values-release-base.yaml -f ./higress/helm/higress/values-release-ha.yaml -f ./higress/helm/higress/values-release-upstreams.yaml`，渲染结果共 `3904` 行。
+- 已导出 `out/docs/1.0.0/` 正式文档交付件，并校验 `user-manual` 的截图引用已全部落盘。
+- `./start.sh release-deploy --target k3d ... --dry-run` 在当前机器失败，原因是缺少本机命令 `k3d`，属于环境前置条件未满足，不是仓库脚本错误。

@@ -1,5 +1,8 @@
 # 发布与部署任务台账
 
+> 文档职责：本目录只负责 release bundle、部署目标、HA、发布回归和验收台账。  
+> 日常产品研发状态不写在这里，统一回 `task.md` / `TODO.md` / `Memory.md`。
+
 ## 状态约定
 
 - `todo`：尚未开始
@@ -43,6 +46,7 @@
 - 当前重点：
   - 完成 release bundle 的 dry-run / 模板渲染 / PostgreSQL smoke 回归记录。
   - 在具备 `k3d` 和可推送 registry 的环境补齐完整端到端发布验收。
+  - 将 `1.0.0` 正式版本口径、bundle 命名与正式交付文档统一收口。
 
 ## 最近更新
 

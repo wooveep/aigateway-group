@@ -46,7 +46,7 @@ higress-core:
   gateway:
     name: aigateway-gateway
     repository: aigateway/gateway
-    tag: "2.2.0-dev-20260419132939"
+    tag: "1.0.0"
     service:
       type: ClusterIP
     hostPort:
@@ -54,14 +54,14 @@ higress-core:
   controller:
     name: aigateway-controller
     repository: aigateway/controller
-    tag: "2.2.0-dev-20260419132939"
+    tag: "1.0.0"
   pilot:
     repository: aigateway/pilot
-    tag: "2.2.0-dev-20260419132939"
+    tag: "1.0.0"
   pluginServer:
     name: aigateway-plugin-server
     repository: aigateway/plugin-server
-    tag: "1.0.0-dev-20260419132939"
+    tag: "1.0.0"
   redis:
     enabled: true
     fullnameOverride: redis-server
@@ -105,7 +105,7 @@ aigateway-console:
   name: aigateway-console
   image:
     repository: aigateway/console
-    tag: "2.2.0-dev-20260422064512"
+    tag: "1.0.0"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -143,7 +143,7 @@ aigateway-portal:
     corePrometheusURL: "http://aigateway-console-prometheus:9090/prometheus"
   image:
     repository: aigateway/portal
-    tag: "0.2.0-dev-20260421141000"
+    tag: "1.0.0"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP

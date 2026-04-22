@@ -13,6 +13,9 @@ target/
 logs/
 *.log
 *.log.*
+out/docs/
+out/release/
+output/manual/
 tmp/
 .tmp/
 /.tmp-*

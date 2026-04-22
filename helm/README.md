@@ -1,5 +1,14 @@
 # AIGateway Group Helm & Dev Mode
 
+正式交付文档请优先查看：
+
+- `../docs/release/1.0.0/release-notes.md`
+- `../docs/release/1.0.0/image-bundle.md`
+- `../docs/release/1.0.0/deployment-guide.md`
+
+当前正式发布版本口径固定为 `1.0.0`。  
+仓库管理的一方镜像统一使用 `1.0.0`，第三方依赖镜像保持上游版本并通过 bundle / Helm values 锁定。
+
 推荐入口与兼容入口：
 
 - 推荐高层入口：`./start.sh`
@@ -122,7 +131,7 @@
 发布 bundle 默认目录：
 
 ```text
-out/release/<bundle-name>/
+out/release/aigateway-1.0.0/
   charts/
   images/
   values/
@@ -155,19 +164,19 @@ out/release/<bundle-name>/
 ./start.sh sync --check
 
 # 3. 生成 release bundle
-./start.sh release-build --bundle-name aigateway-release-$(date +%Y%m%d%H%M%S)
+./start.sh release-build --bundle-name aigateway-1.0.0
 
 # 4. k8s 目标 dry-run
 ./start.sh release-deploy \
   --target k8s \
-  --bundle-dir out/release/<bundle-name> \
+  --bundle-dir out/release/aigateway-1.0.0 \
   --registry registry.example.com/team \
   --dry-run
 
 # 5. k3d 目标 dry-run
 ./start.sh release-deploy \
   --target k3d \
-  --bundle-dir out/release/<bundle-name> \
+  --bundle-dir out/release/aigateway-1.0.0 \
   --cluster <k3d-cluster> \
   --dry-run
 
