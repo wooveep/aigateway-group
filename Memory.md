@@ -1,5 +1,32 @@
 # AIGateway Group - 协作记忆
 
+## 2026-04-22
+
+### 文档整编与 1.0.0 正式交付口径
+
+- 根级文档体系已明确拆分为两条主线：
+  - 研发 / 产品主控：`Project.md`、`roadmap.md`、`task.md`、`TODO.md`、`Memory.md`
+  - 发布 / 部署主控：`TASK/README.md` 与 `TASK/P0~P7`
+- `AGENTS.md` 已升级为仓库唯一 agent 协作规则入口，固定文档读取顺序、正式约束和文档同步规则。
+- 新增 `docs/` 作为正式文档源码目录：
+  - `docs/overview/`
+  - `docs/release/1.0.0/`
+  - `docs/manual/1.0.0/`
+- 当前正式发布版本固定为 `1.0.0`。
+- 正式版本规则固定为：
+  - 仓库管理的一方镜像统一使用 `1.0.0`
+  - 第三方依赖镜像保持上游版本，通过 bundle 元数据和 Helm values 锁定
+- 发布 bundle 默认目录名固定为 `out/release/aigateway-1.0.0/`。
+- Markdown 被确定为仓库内正式文档真相源，Docx / PDF 作为导出交付件。
+- 已新增 `scripts/export-formal-docs.py`，默认将 `docs/` 下正式文档导出到 `out/docs/1.0.0/`。
+- 已基于本地 `1.0.0` 运行环境补齐用户手册截图，正式截图目录固定为 `output/manual/1.0.0/`。
+- `scripts/release-build.sh` 已修复：`metadata/images.lock` 必须按实际渲染镜像集合生成，不再允许与 bundle `images/*.tar` 脱节。
+- 发布依赖镜像已切换到当前可拉取的 `bitnamilegacy/*` 标签集合：
+  - `docker.io/bitnamilegacy/pgpool:4.6.3-debian-12-r0`
+  - `docker.io/bitnamilegacy/postgresql-repmgr:17.6.0-debian-12-r2`
+  - `docker.io/bitnamilegacy/redis:8.0.3-debian-12-r2`
+  - `docker.io/bitnamilegacy/redis-sentinel:8.0.3-debian-12-r2`
+
 ## 2026-04-19
 
 ### 当前数据库口径更新
