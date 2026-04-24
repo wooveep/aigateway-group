@@ -2,12 +2,12 @@
 
 正式交付文档请优先查看：
 
-- `../docs/release/1.0.0/release-notes.md`
-- `../docs/release/1.0.0/image-bundle.md`
-- `../docs/release/1.0.0/deployment-guide.md`
+- `../docs/release/1.1.0/release-notes.md`
+- `../docs/release/1.1.0/image-bundle.md`
+- `../docs/release/1.1.0/deployment-guide.md`
 
-当前正式发布版本口径固定为 `1.0.0`。  
-仓库管理的一方镜像统一使用 `1.0.0`，第三方依赖镜像保持上游版本并通过 bundle / Helm values 锁定。
+当前正式发布版本口径固定为 `1.1.0`。  
+仓库管理的一方镜像统一使用 `1.1.0`，第三方依赖镜像保持上游版本并通过 bundle / Helm values 锁定。
 
 推荐入口与兼容入口：
 
@@ -126,6 +126,10 @@
   - 从 bundle 部署到 `k3d` / 通用 `k8s`
   - `--target k3d`：`docker load + k3d image import + helm upgrade`
   - `--target k8s`：`docker load + docker tag/push + helm upgrade`
+  - Console / Portal Ingress 域名优先读取 `aigateway-system/aigateway-cluster-domain` 的 `baseDomain`；也可以用 `--base-domain`、`--console-host`、`--portal-host` 覆盖
+- `./start.sh release-k3d-cluster` / `./scripts/release-k3d-cluster.sh`
+  - 新建 k3d 发布验收集群，并用 `--base-domain` 写入集群域名定义
+  - 默认禁用 k3s Traefik，避免与 AIGateway Ingress 入口冲突
 
 ## 发布 bundle
 
@@ -138,7 +142,7 @@
 发布 bundle 默认目录：
 
 ```text
-out/release/aigateway-1.0.0/
+out/release/aigateway-1.1.0/
   charts/
   images/
   values/
@@ -171,20 +175,26 @@ out/release/aigateway-1.0.0/
 ./start.sh sync --check
 
 # 3. 生成 release bundle
-./start.sh release-build --bundle-name aigateway-1.0.0
+./start.sh release-build --bundle-name aigateway-1.1.0
 
 # 4. k8s 目标 dry-run
 ./start.sh release-deploy \
   --target k8s \
-  --bundle-dir out/release/aigateway-1.0.0 \
+  --bundle-dir out/release/aigateway-1.1.0 \
   --registry registry.example.com/team \
   --dry-run
 
 # 5. k3d 目标 dry-run
+./start.sh release-k3d-cluster \
+  --cluster <k3d-cluster> \
+  --base-domain example.com \
+  --dry-run
+
 ./start.sh release-deploy \
   --target k3d \
-  --bundle-dir out/release/aigateway-1.0.0 \
+  --bundle-dir out/release/aigateway-1.1.0 \
   --cluster <k3d-cluster> \
+  --base-domain example.com \
   --dry-run
 
 # 6. Helm 渲染检查：HA + upstream 负载模板

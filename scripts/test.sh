@@ -8,7 +8,7 @@ source "${ROOT_DIR}/scripts/dev-shell-lib.sh"
 
 STAGE="all"
 RELEASE_REGISTRY="${TEST_RELEASE_REGISTRY:-registry.example.com/team}"
-RELEASE_BUNDLE_DIR="${TEST_RELEASE_BUNDLE_DIR:-${ROOT_DIR}/out/release/aigateway-1.0.0}"
+RELEASE_BUNDLE_DIR="${TEST_RELEASE_BUNDLE_DIR:-${ROOT_DIR}/out/release/aigateway-1.1.0}"
 ACCEPTANCE_DIR="${TEST_ACCEPTANCE_DIR:-${ROOT_DIR}/out/test-acceptance/latest}"
 ACCEPTANCE_TEMPLATE_DIR="${ROOT_DIR}/TASK/release/acceptance"
 HELM_RELEASE_NAME="${TEST_HELM_RELEASE_NAME:-aigateway}"
@@ -32,7 +32,7 @@ Options:
 
 Environment:
   TEST_RELEASE_REGISTRY      Defaults to registry.example.com/team.
-  TEST_RELEASE_BUNDLE_DIR    Defaults to out/release/aigateway-1.0.0.
+  TEST_RELEASE_BUNDLE_DIR    Defaults to out/release/aigateway-1.1.0.
   TEST_ACCEPTANCE_DIR        Defaults to out/test-acceptance/latest.
 EOF
 }

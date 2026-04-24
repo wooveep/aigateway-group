@@ -15,6 +15,11 @@ SKIP_IMPORT=false
 SKIP_PUSH=false
 SKIP_DEPLOY=false
 K3D_CLUSTER=""
+INGRESS_BASE_DOMAIN=""
+USER_PROVIDED_BASE_DOMAIN=false
+CONSOLE_HOST=""
+PORTAL_HOST=""
+DOMAIN_CONFIG_NAME="aigateway-cluster-domain"
 HELM_TIMEOUT="${HELM_TIMEOUT:-15m}"
 EXTRA_SET_ARGS=()
 
@@ -33,6 +38,9 @@ Options:
   --image-pull-secret <name>    Optional image pull secret for k8s deploy.
   --replicas <csv>              e.g. gateway=3,controller=2,pluginServer=2,console=2,portal=2
   --cluster <name>              k3d cluster name. Default: inferred from current context.
+  --base-domain <domain>        Console/Portal base domain. Hosts become console.<domain>/portal.<domain>.
+  --console-host <host>         Console ingress host override.
+  --portal-host <host>          Portal ingress host override.
   --skip-import                 Skip docker load / k3d import.
   --skip-push                   Skip docker push when target=k8s.
   --skip-deploy                 Skip helm upgrade.
@@ -104,6 +112,60 @@ apply_replica_sets() {
         ;;
     esac
   done
+}
+
+read_cluster_base_domain() {
+  local base_domain
+  base_domain="$(kubectl -n "${NAMESPACE}" get configmap "${DOMAIN_CONFIG_NAME}" -o jsonpath='{.data.baseDomain}' 2>/dev/null || true)"
+  if [[ -z "${base_domain}" ]]; then
+    base_domain="$(kubectl get namespace "${NAMESPACE}" -o jsonpath='{.metadata.annotations.aigateway\.io/ingress-base-domain}' 2>/dev/null || true)"
+  fi
+  printf '%s\n' "${base_domain}"
+}
+
+save_cluster_domain_config() {
+  local base_domain="$1"
+  [[ -n "${base_domain}" ]] || return 0
+
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "+ kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+    echo "+ kubectl -n ${NAMESPACE} create configmap ${DOMAIN_CONFIG_NAME} --from-literal=baseDomain=${base_domain} --from-literal=consoleHost=console.${base_domain} --from-literal=portalHost=portal.${base_domain} --dry-run=client -o yaml | kubectl apply -f -"
+    echo "+ kubectl annotate namespace ${NAMESPACE} aigateway.io/ingress-base-domain=${base_domain} --overwrite"
+    return 0
+  fi
+
+  kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl -n "${NAMESPACE}" create configmap "${DOMAIN_CONFIG_NAME}" \
+    --from-literal="baseDomain=${base_domain}" \
+    --from-literal="consoleHost=console.${base_domain}" \
+    --from-literal="portalHost=portal.${base_domain}" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  kubectl annotate namespace "${NAMESPACE}" "aigateway.io/ingress-base-domain=${base_domain}" --overwrite
+}
+
+apply_ingress_host_overrides() {
+  local cluster_base_domain
+
+  if [[ -z "${INGRESS_BASE_DOMAIN}" ]]; then
+    cluster_base_domain="$(read_cluster_base_domain)"
+    INGRESS_BASE_DOMAIN="${cluster_base_domain}"
+  fi
+
+  if [[ -n "${INGRESS_BASE_DOMAIN}" ]]; then
+    [[ -n "${CONSOLE_HOST}" ]] || CONSOLE_HOST="console.${INGRESS_BASE_DOMAIN}"
+    [[ -n "${PORTAL_HOST}" ]] || PORTAL_HOST="portal.${INGRESS_BASE_DOMAIN}"
+  fi
+
+  if [[ -n "${CONSOLE_HOST}" ]]; then
+    EXTRA_SET_ARGS+=(--set "aigateway-console.ingress.enabled=true")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-console.ingress.domain=${CONSOLE_HOST}")
+  fi
+
+  if [[ -n "${PORTAL_HOST}" ]]; then
+    EXTRA_SET_ARGS+=(--set "aigateway-portal.ingress.enabled=true")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-portal.ingress.className=aigateway")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-portal.ingress.host=${PORTAL_HOST}")
+  fi
 }
 
 import_bundle_images() {
@@ -199,6 +261,19 @@ while [[ $# -gt 0 ]]; do
       K3D_CLUSTER="$2"
       shift 2
       ;;
+    --base-domain)
+      INGRESS_BASE_DOMAIN="$2"
+      USER_PROVIDED_BASE_DOMAIN=true
+      shift 2
+      ;;
+    --console-host)
+      CONSOLE_HOST="$2"
+      shift 2
+      ;;
+    --portal-host)
+      PORTAL_HOST="$2"
+      shift 2
+      ;;
     --skip-import)
       SKIP_IMPORT=true
       shift
@@ -252,6 +327,11 @@ if [[ -n "${IMAGE_PULL_SECRET}" ]]; then
   EXTRA_SET_ARGS+=(--set-string "aigateway-portal.imagePullSecrets[0].name=${IMAGE_PULL_SECRET}")
 fi
 
+apply_ingress_host_overrides
+if [[ "${USER_PROVIDED_BASE_DOMAIN}" == "true" ]]; then
+  save_cluster_domain_config "${INGRESS_BASE_DOMAIN}"
+fi
+
 if [[ "${SKIP_IMPORT}" != "true" ]]; then
   import_bundle_images
 fi
@@ -291,3 +371,7 @@ echo "  target    : ${TARGET}"
 echo "  bundle    : ${BUNDLE_DIR}"
 echo "  release   : ${RELEASE_NAME}"
 echo "  namespace : ${NAMESPACE}"
+if [[ -n "${CONSOLE_HOST}" || -n "${PORTAL_HOST}" ]]; then
+  echo "  console   : ${CONSOLE_HOST:-<values-default>}"
+  echo "  portal    : ${PORTAL_HOST:-<values-default>}"
+fi

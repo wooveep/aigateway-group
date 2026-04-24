@@ -3,6 +3,22 @@
 > 文档职责：本文件只维护执行清单、完成状态和待办账本。  
 > 当前状态看 `task.md`，历史原因看 `Memory.md`，发布 / 部署专项任务看 `TASK/README.md`。
 
+## P0（2026-04-24 1.1.0 正式发布交付）
+
+- [x] 将正式版本源、Chart 版本、release values 和默认 bundle 名称推进到 `1.1.0`。
+- [x] 新增 `1.1.0` 发布说明、镜像包说明和 K8S / K3D&Helm 部署说明。
+- [x] 新增 `1.1.0` 项目介绍白皮书。
+- [x] 输出 `1.1.0` release bundle 镜像包。
+  结果：`out/release/aigateway-1.1.0/` 已生成，包含 11 个镜像 tar、`higress-1.1.0.tgz`、release values、`images.lock`、`SHA256SUMS` 与 `deploy.sh`；`SHA256SUMS` 已排除自身并校验通过。
+- [x] 输出 `1.1.0` 项目介绍 PPT，并覆盖项目架构图与业务逻辑图。
+  结果：`out/docs/1.1.0/aigateway-project-introduction-1.1.0.pptx` 已生成，封面资产来自 `imagegen`。
+- [x] 完成 `1.1.0` 发布 dry-run、Helm template 和文档导出校验。
+  结果：`release-build --dry-run`、`k8s release-deploy --dry-run`、release values `helm template`、正式文档导出均已通过；`k3d` dry-run 因当前机器缺少 `k3d` 命令未执行成功。
+- [x] 修复 `1.1.0` 干净库首启阻断与正式访问口径。
+  结果：Portal 启动迁移已补 `portal_model_binding_price_version`，账单模型 bootstrap 在 K8s 模型目录为空时会回退到 legacy `portal_model_catalog`；release values 已改为 Console / Portal 走 Kubernetes Ingress，不依赖 port-forward；已重新生成 `out/release/aigateway-1.1.0/` 并升级 `192.168.42.200` 到 Helm revision `3`。
+- [x] 增加正式部署域名配置契约。
+  结果：`release-deploy` 支持读取 / 写入 `aigateway-system/aigateway-cluster-domain`，支持 `--base-domain`、`--console-host`、`--portal-host`；新增 `release-k3d-cluster.sh` 用于创建 k3d 时指定域名。
+
 ## P0（2026-04-24 仓库级测试闸门与页面验收）
 
 - [x] 为 `./start.sh` 增加统一测试入口 `test --stage unit|integration|e2e|acceptance|release|all`。

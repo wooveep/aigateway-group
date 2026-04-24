@@ -47,18 +47,23 @@
   - 将 `./start.sh test --stage unit|integration|e2e|acceptance|release` 固化为发布前统一闸门。
   - 完成 release bundle 的 dry-run / 模板渲染 / PostgreSQL smoke 回归记录。
   - 在具备 `k3d` 和可推送 registry 的环境补齐完整端到端发布验收。
-  - 将 `1.0.0` 正式版本口径、bundle 命名与正式交付文档统一收口。
+  - 将 `1.1.0` 正式版本口径、bundle 命名与正式交付文档统一收口。
 
 ## 最近更新
 
+- 已在 `192.168.42.200` 的干净 Ubuntu 24.04.3 LTS 环境完成 `1.1.0` k3d 实机部署验收；过程记录见 `docs/release/1.1.0/install-192.168.42.200.md`。
+- 已补齐正式部署域名配置契约：标准 K8S 读取 `aigateway-system/aigateway-cluster-domain`，新建 k3d 通过 `./start.sh release-k3d-cluster --base-domain <domain>` 写入，后续通过 `./start.sh release-deploy --base-domain <domain>` 修改 Console / Portal Ingress 域名。
+- 本次实机部署补充了无互联网场景必须携带的运行时镜像集合，并记录 `k3d image import` 在 Docker 29 下需要回退到逐节点 `ctr images import` 的 caveat。
 - 根级 `TASK/release/` 已收口为发布与部署改造的唯一任务台账。
 - 已确定阶段顺序为 `P0 -> P1 -> P2 -> P3 -> P4 -> P5/P6 -> P7`。
 - 已落下发布骨架：
   - `./scripts/release-build.sh`
   - `./scripts/release-deploy.sh`
+  - `./scripts/release-k3d-cluster.sh`
   - `./scripts/test.sh`
   - `./start.sh release-build`
   - `./start.sh release-deploy`
+  - `./start.sh release-k3d-cluster`
   - `./start.sh test --stage <...>`
 - 已完成：
   - bundle 输出目录与镜像 `tar` 元数据

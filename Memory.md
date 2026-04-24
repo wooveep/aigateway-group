@@ -1,5 +1,43 @@
 # AIGateway Group - 协作记忆
 
+## 2026-04-24
+
+### 1.1.0 在 192.168.42.200 的 k3d 部署记录
+
+- 已在 `192.168.42.200` 的 Ubuntu 24.04.3 LTS 上完成 `1.1.0` k3d 部署，安装目录为 `/opt/aigateway-install/1.1.0/`。
+- 正式部署访问口径使用 Kubernetes Ingress，不保留 Console / Portal port-forward systemd 服务；`192.168.42.200` 上临时排障用 port-forward 服务已删除。
+- 目标机保留了运行时离线包：
+  - `aigateway-runtime-ubuntu24.04-amd64-20260424.tar.gz`
+  - `aigateway-runtime-with-k3d-images-ubuntu24.04-amd64-20260424.tar.gz`
+- 目标机访问 Docker Hub / GitHub 不稳定，后续无互联网机器部署必须把 k3d / k3s / k3s system images 与 release bundle 一起携带。
+- 当前 Docker 29 + k3d v5.8.3 组合下，`k3d image import` 对部分 docker archive 会打印 `ctr: content digest ... not found` / `unexpected EOF`，本次使用 `docker cp + ctr -n k8s.io images import` 逐节点导入作为可靠路径。
+- `1.1.0` 首启暴露的两个迁移缺口已修复到仓库：
+  - Portal 启动迁移会创建 `portal_model_binding_price_version`。
+  - K8s 模型目录为空时，Portal 账单模型 bootstrap 会回退到 legacy `portal_model_catalog`。
+- 修复后已重新生成 `out/release/aigateway-1.1.0/`，同步到 `192.168.42.200`，并将目标机 Helm release 升级到 revision `3`；目标机 Portal Pod 已使用重建后的 `aigateway/portal:1.1.0`。
+- Console / Portal 正式 Ingress 域名契约：标准 K8S 集群从 `aigateway-system/aigateway-cluster-domain` 读取 `baseDomain`，新建 k3d 使用 `release-k3d-cluster.sh --base-domain` 写入，后续修改可重新执行 `release-deploy --base-domain`。
+- 本次安装详情已记录在 `docs/release/1.1.0/install-192.168.42.200.md`。
+
+### 1.1.0 正式发布交付口径
+
+- 当前正式发布版本推进到 `1.1.0`。
+- `helm/image-versions.yaml` 是 `1.1.0` 镜像 tag、默认 bundle 名称和 release 参数的单一事实源。
+- 仓库管理的一方镜像统一使用 `1.1.0`：
+  - `aigateway`
+  - `aigateway/controller`
+  - `aigateway/gateway`
+  - `aigateway/pilot`
+  - `aigateway/console`
+  - `aigateway/portal`
+  - `aigateway/plugin-server`
+- 第三方依赖镜像继续保持上游版本，并由 bundle `metadata/images.lock` 与 release values 锁定。
+- `1.1.0` 正式发布文档真相源固定为：
+  - `docs/release/1.1.0/release-notes.md`
+  - `docs/release/1.1.0/image-bundle.md`
+  - `docs/release/1.1.0/deployment-guide.md`
+  - `docs/overview/aigateway-whitepaper-1.1.0.md`
+- `1.1.0` 项目介绍 PPT 交付件固定输出到 `out/docs/1.1.0/aigateway-project-introduction-1.1.0.pptx`。
+
 ## 2026-04-23
 
 ### 发布前测试闸门与 Chrome DevTools 验收
