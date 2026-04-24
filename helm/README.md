@@ -62,6 +62,13 @@
 # 生成发布 bundle（chart tgz + images tar + values + deploy.sh）
 ./start.sh release-build
 
+# 执行仓库级测试闸门
+./start.sh test --stage unit
+./start.sh test --stage integration
+./start.sh test --stage e2e
+./start.sh test --stage acceptance
+./start.sh test --stage release
+
 # 从 bundle 部署到 k8s / k3d
 ./start.sh release-deploy --target k8s --registry registry.example.com/team
 
@@ -195,6 +202,13 @@ cd ../../aigateway-portal/backend
 GOTOOLCHAIN=auto go test ./internal/service/portal \
   -run TestPortalReadsConsoleWrittenSharedSchemaRowsOnPostgres -count=1
 ```
+
+## Portal OIDC SSO 部署补充
+
+- 若启用 Portal OIDC SSO，需在 Helm values 中显式设置 `aigateway-portal.backend.publicBaseURL`。
+- 该值会注入为 `PORTAL_PUBLIC_BASE_URL`，Portal 后端据此生成稳定的 `/api/auth/sso/callback` 地址。
+- 这里应填写用户浏览器真实访问的 Portal 外部基地址，而不是集群内 Service 地址；否则 OIDC Provider 回调会落到错误地址。
+- OIDC 的 `issuer/client/scopes/claim mapping` 仍由 Console `/system` 页面写入共享库 `portal_sso_config`，不走 Helm values。
 
 ## fresh tags 规则
 

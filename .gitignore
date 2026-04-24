@@ -13,10 +13,8 @@ target/
 logs/
 *.log
 *.log.*
-out/docs/
-out/release/
-output/manual/
-tmp/
+out/
+output/
 .tmp/
 /.tmp-*
 ### STS ###

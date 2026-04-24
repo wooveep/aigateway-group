@@ -1,5 +1,107 @@
 # AIGateway Group - 协作记忆
 
+## 2026-04-23
+
+### 发布前测试闸门与 Chrome DevTools 验收
+
+- 仓库级测试入口已固定为 `./start.sh test --stage <unit|integration|e2e|acceptance|release|all>`，不再要求各子项目手工拼接测试命令作为正式发布前置。
+- 测试阶段语义已固定为：
+  - `unit`：Portal / Console 后端默认 Go 单测、关键 Higress runtime 插件 Go 单测、`plugin-server` Python 单测
+  - `integration`：Portal / Console 带 `integration` build tag 的 PostgreSQL / Testcontainers 集成测试
+  - `e2e`：Portal / Console Playwright 页面黑盒
+  - `acceptance`：Chrome DevTools 页面点击验收结果校验
+  - `release`：串联 `help/show/sync --check`、各测试阶段、`release-build --dry-run`、`release-deploy --dry-run` 与 `helm template`
+- Portal / Console 的 `_integration_test.go` 已正式加上 `integration` build tag：
+  - 默认 `go test ./...` 不再拉起 Testcontainers
+  - 发布前需要显式执行 `go test -tags=integration ./...`
+- Chrome DevTools 验收真相源已固定为 `TASK/release/acceptance/` 模板与 `out/test-acceptance/latest/summary.json`：
+  - 首次运行 `./start.sh test --stage acceptance` 会生成模板
+  - 未填写或状态不是 `pass` 时，验收门禁必须失败
+  - `summary.json.tool` 固定为 `chrome-devtools`
+
+### AI Route 鉴权 / 额度插件顺序约束
+
+- `ai-quota` 在 `AI Route` 上依赖 `key-auth` 或 Portal 内部链路预先写入的 `x-mse-consumer`。
+- 对 public `AI Route` 而言，`key-auth` 会在请求头阶段把认证后的调用方写入 `X-Mse-Consumer` / `X-Higress-Api-Key-Id`，`ai-quota` 必须在其后执行才能读到鉴权结果。
+- 控制面 builtin `WasmPlugin` 契约已固定为：
+  - `key-auth`：`phase=AUTHN`
+  - `ai-quota`：`phase=AUTHN`
+  - 且 `ai-quota.priority` 必须低于 `key-auth.priority`，保证同 phase 下 `key-auth` 先执行。
+- 若把 `ai-quota` 回退到 `UNSPECIFIED_PHASE`，`minikube-dev` 环境已实测会导致 `POST /qwen/v1/chat/completions` 返回 `401 Request denied by ai quota check. No Key Authentication information found.`。
+- internal AI Route 仍按既有设计工作：
+  - Portal 后端直连 `/internal/ai-routes/*` 时直接写 `x-mse-consumer`
+  - 不要求 `key-auth` 额外挂到 `*-internal` ingress 上
+  - phase 修正后，带 `x-mse-consumer` 的 internal 调用已实测恢复 `200`
+
+### 组织模型正式收口
+
+- Portal / Console 的组织账号模型已正式固定为“部门树 + 部门管理员 + 部门成员”，不再把“父账号 / 子账号”作为正式管理模型。
+- 组织真相源固定为共享表：
+  - `org_department`
+  - `org_account_membership`
+- 部门管理员真相源固定为 `org_department.admin_consumer_name`；Portal 和 Console 都通过该字段判断 `isDepartmentAdmin`。
+- Portal 可管理范围已固定为“当前部门管理员可管理自己所在部门子树内的成员账号”；作用域判断不再依赖 `parent_consumer_name`。
+- Portal 新建成员规则已固定为：
+  - 仅部门管理员可创建成员
+  - 新成员只能创建到操作者当前部门
+  - 密码留空时自动生成临时密码
+- Portal 余额调整语义已固定为“管理员钱包与成员钱包之间的强一致转账”：
+  - 正数表示管理员转给成员
+  - 负数表示从成员回收到管理员
+  - 两边钱包和流水必须在单事务内同时成功
+- Console 部门管理规则已固定为：
+  - 新建部门时支持两种管理员来源：
+    - 选择已有活跃用户作为部门管理员（默认）
+    - 同时创建新的部门管理员账号
+  - 编辑部门时只能把管理员改绑到当前部门内的活跃账号
+- 若新建部门时选择的已有用户当前已在别的部门：
+  - 会自动迁移其 `org_account_membership.department_id` 到新部门
+  - 若该用户当前是其他活跃部门管理员，会先清空原部门 `admin_consumer_name`
+- `org_account_membership.parent_consumer_name` 已降级为历史兼容列：
+  - 历史数据统一清空
+  - 新代码不得再读写或依赖该字段做业务判断
+
+### Portal OIDC SSO 首版约束
+
+- Portal 首版已固定支持“本地账号 + 单一全局 OIDC Provider”双入口，不替换现有邀请码注册与密码登录链路。
+- SSO 配置真相源固定为共享表 `portal_sso_config`，外部身份绑定真相源固定为共享表 `portal_user_sso_identity`。
+- Console `/system` 页面负责唯一配置入口；保存时会直接校验 `issuer` 的 `.well-known/openid-configuration`，并要求 discovery 文档中存在 `authorization_endpoint`、`token_endpoint`、`jwks_uri`。
+- `client_secret` 存储时加密、读取时脱敏；Portal 运行时只从共享库读取，不依赖 Console 环境变量。
+- Portal SSO 首绑顺序已固定为：
+  - 先按 `(provider_key, issuer, subject)` 查绑定
+  - 未绑定时按 email 精确匹配本地账号
+  - 仍未命中时自动创建 `source=sso`、`status=pending`、`user_level=normal` 的本地账号，并补空 `org_account_membership`
+- 首版明确不从 IdP claim 覆盖本地 `department`、`admin_consumer_name`、`user_level`、`status`，也不自动发 API Key。
+- `PORTAL_PUBLIC_BASE_URL` 已成为 Portal OIDC callback URL 的稳定部署入口；若未设置，Portal 才会退回基于请求头推导公网地址。
+- Console 已补管理员手动改绑入口，但不新增中间表：
+  - 继续复用 `portal_user_sso_identity` 作为唯一 SSO 绑定真相源
+  - 手动改绑仅面向 `source=sso && status=pending` 的自动建档账号
+  - 改绑成功后，原 pending SSO 账号会执行软删除，而不是物理删除
+- Console 组织账号删除正式语义已固定为软删除：
+  - 写 `portal_user.is_deleted=true`、`deleted_at=now`
+  - 软删除账号默认不再出现在组织列表、部门管理员候选和 SSO 改绑目标中
+  - 软删除账号不可登录 Portal，也不得作为部门管理员继续使用
+
+### P3-AF-07 ~ P3-AF-11 协议收口
+
+- `ai-proxy`、Console、Portal 的一级 canonical protocol 已固定为：
+  - `openai/v1`
+  - `anthropic/v1/messages`
+  - `original`
+- Provider 资源额外允许 `auto`，用于映射 `ai-proxy` 的空协议自动检测模式；`model_binding.protocol` 不允许 `auto`。
+- `ai-proxy` 当前运行时语义已固定为：
+  - `protocol=""`：保留现有 OpenAI / Claude 自动检测
+  - `protocol=openai`：以 OpenAI 为主，但仍允许 Claude `/v1/messages` 自动兜底
+  - `protocol=anthropic`：固定按 Claude `messages` 入口处理；下游不支持时复用现有 Claude <-> OpenAI 转换链路
+  - `protocol=original`：只走 provider 原生协议，完全关闭 OpenAI / Claude 自动检测
+- `responses`、`embeddings`、`images`、`audio`、`realtime`、`files`、`batches`、`models`、`videos` 等不再作为一级协议；它们只作为 capability 或推荐入口。
+- `Console` 已新增协议目录接口，统一输出 `protocolOptions`、`recommendedEndpoints`、`providerProtocolMatrix`、`providerDocsStatus`。
+- Provider API 文档事实源已固定为 `TASK/projects/aigateway-console/provider-api-docs/<provider>/` 子目录；`providerDocsStatus=confirmed` 仅在对应子目录下存在足够官方文档时返回，否则返回 `pending`。
+- 历史协议值已在 Console / Portal 读写层归一：
+  - `""`、`openai`、`openai/v1/chatcompletions`、`responses` 等归一为 `openai/v1`
+  - `claude`、`anthropic`、`/v1/messages` 等归一为 `anthropic/v1/messages`
+  - `original` 保持不变
+
 ## 2026-04-22
 
 ### 文档整编与 1.0.0 正式交付口径

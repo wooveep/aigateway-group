@@ -3,6 +3,15 @@
 > 文档职责：本文件只维护执行清单、完成状态和待办账本。  
 > 当前状态看 `task.md`，历史原因看 `Memory.md`，发布 / 部署专项任务看 `TASK/README.md`。
 
+## P0（2026-04-24 仓库级测试闸门与页面验收）
+
+- [x] 为 `./start.sh` 增加统一测试入口 `test --stage unit|integration|e2e|acceptance|release|all`。
+  结果：新增 `scripts/test.sh`，将后端单测、`integration` tag 集成测试、Playwright、Chrome DevTools 验收校验和 release dry-run 串成统一门禁。
+- [x] 为 Portal 前端补 Playwright smoke，并扩展 Console 前端 Playwright 覆盖主页面。
+  结果：Portal 已新增 `playwright.config.ts` 与 `tests/portal-pages.smoke.spec.ts`；Console 已补管理页 smoke，覆盖 Dashboard、组织、模型资产、Provider、Agent Catalog、MCP、System Jobs。
+- [x] 为 `plugin-server` 补最小单测，并补齐 Chrome DevTools 验收模板与校验脚本。
+  结果：`plugin-server/tests/test_plugin_scripts.py` 已覆盖元数据与 properties 解析；`TASK/release/acceptance/` 与 `scripts/validate-acceptance.py` 已作为 acceptance 真相源。
+
 ## P0（2026-04-22 文档整编 / 1.0.0 正式交付）
 
 - [x] 收口根级文档职责边界，明确研发 / 产品主控与发布 / 部署主控两条主线。
@@ -11,6 +20,32 @@
 - [x] 基于 `1.0.0` 环境补齐 Portal + Console 用户手册截图，并输出到 `output/manual/1.0.0/`。
 - [x] 产出 Docx / PDF 正式交付件并完成链接、图片、导出校验。
 - [x] 修复 `release-build` 中 `images.lock` 与 bundle `images/*.tar` 不一致的问题，确保正式 bundle 可用于后续 `release-deploy`。
+
+## P3（2026-04-23 协议事实源与 ai-proxy 协议收口）
+
+- [x] 统一 `Console model-assets / ai-providers / Portal / ai-proxy` 的协议事实源，固定一级 protocol 为 `openai/v1`、`anthropic/v1/messages`、`original`，并将 `responses` 等接口能力收口为 capability / 推荐入口。
+- [x] 调整 `ai-proxy` `provider.protocol` 语义为 `auto/openai/anthropic/original`，保持 `auto` 自动检测、显式 `openai` 仍允许 Claude `/v1/messages` 自动兜底、显式 `original` 才完全关闭自动检测。
+- [x] 新增 Console 协议目录接口，统一输出 `protocolOptions`、`recommendedEndpoints`、`providerProtocolMatrix`、`providerDocsStatus`。
+- [x] 将 Console Provider / Model Binding 表单改为受控协议下拉，并按协议目录联动推荐入口与 docs status 展示。
+- [x] 收口 `TASK/projects/aigateway-console/provider-api-docs/<provider>/` 为 provider 文档事实源；未投递足够官方文档的 provider 统一标记为 `pending`。
+- [x] 兼容迁移历史协议值：`openai` / `responses` / `anthropic` / `claude` / 空值等旧口径会在 Console / Portal 读写路径中归一为 canonical protocol 与推荐 endpoint。
+
+## P3（2026-04-23 Portal OIDC SSO 首版）
+
+- [x] 为 Portal / Console 共库补齐 `portal_sso_config`、`portal_user_sso_identity` 两张共享表。
+  结果：Portal 启动迁移与 Console `portaldb` 自动建表已同步覆盖，SSO 配置与外部身份绑定有了统一事实源。
+- [x] 为 Portal 后端新增 OIDC SSO 配置读取、authorize、callback 与邮箱首绑 / 自动建档链路。
+  结果：Portal 保留本地账号体系，同时支持单一全局 OIDC Provider；首次 SSO 登录会优先 `(issuer, sub)` 命中绑定，其次按邮箱首绑，未命中时自动创建 `source=sso`、`status=pending` 的本地账号并补空 membership。
+- [x] 为 Console `/system` 页面新增 Portal SSO 配置入口，并在保存时校验 OIDC discovery。
+  结果：Console 新增 `GET/PUT /v1/portal/sso`，前端可配置启用开关、按钮文案、issuer/client/scopes/claim mapping；读取时 `clientSecret` 脱敏，保存前会校验 `issuer`、`authorization_endpoint`、`token_endpoint`、`jwks_uri`。
+- [x] 为 Portal 前端登录/注册页补充 SSO 入口与提示，并增加 `PORTAL_PUBLIC_BASE_URL` 部署约束。
+  结果：登录页会按 `/api/auth/sso/config` 动态展示“企业 SSO 登录”按钮，注册页补充“SSO 仍需管理员启用”提示；Helm 已新增 `aigateway-portal.backend.publicBaseURL` 用于稳定生成 OIDC callback URL。
+- [x] 为 Console 组织管理页补充 SSO pending 账号改绑入口，并将原自动建档账号改为软删除回收。
+  结果：继续复用 `portal_user_sso_identity` 作为 SSO 绑定真相源；管理员可把 `source=sso && status=pending` 账号改绑到已存在账号，改绑成功后原 pending 账号会被软删除并从默认列表隐藏。
+- [x] 调整 Console 新建部门流程，支持“选择已有用户”或“新建管理员账号”两种模式。
+  结果：新建部门默认可选已有活跃用户作为管理员，保存时会自动迁移该用户到新部门，并在必要时解除其旧部门管理员绑定；保留原有“同步新建管理员账号”路径和临时密码回显行为。
+- [x] 为 Console 组织账号补正式软删除入口。
+  结果：新增 `/v1/org/accounts/:consumerName` 删除接口，语义固定为软删除；已软删除账号默认不再出现在组织列表、部门管理员下拉或 SSO 改绑目标中。
 
 ## P0（2026-04-18 本地环境修复 / 模型资产发布 / Console 自动化验证）
 
@@ -125,7 +160,7 @@
 - [x] 修复 `build-local-images.sh` 对旧插件属性文件的无条件依赖，允许 `--components console` 独立工作。
 - [x] 补齐前端已依赖的 `AI Quota / AI Sensitive / org template-export-import` 首批 Go backend 接口。
 - [x] 补齐 Wasm `readme` 查询与 service-scope plugin instance 首批 parity 缺口。
-- [x] 产出 `aigateway-console/TASK/java-go-parity-matrix.md` 作为 Java -> Go 功能对齐与 legacy TODO 台账。
+- [x] 产出 `TASK/projects/aigateway-console/java-go-parity-matrix.md` 作为 Java -> Go 功能对齐与 legacy TODO 台账。
 - [x] 继续收口 legacy TODO：MCP 显式路由关联元数据、ingressClass、Route/Service/Wasm 深校验。
 - [ ] 继续收口 Portal DB 治理：DAO / DO / Entity 已补首批基础模型，后续仍需推进 service 实用化替换、共享表责任边界、testcontainers 集成测试。
 
@@ -396,7 +431,7 @@
 可观测服务
 高可用
 流量控制
-安全增强"			子账号分配			支持创建和分配子账号权限			
+安全增强"			部门成员分配			支持创建成员账号并分配部门管理员管理权限			
 				子部门创建和管理		支持创建和管理子部门信息			
 				多级子部门管理		支持多层级子部门嵌套管理			
 				模型上架配置		支持配置模型上架及基本信息			
@@ -415,18 +450,18 @@
 					模型记账单	基于模型单价和调用明细，分子部门统计费用报表			
 					模型智能路由	智能根据模型region、时延、成本进行路由选择			
 					智能fallback	选择备用模型，在主用模型性能不佳时自动fallback			
-					智能灰度升级	模型升级时，自动根据子账号的调用请求，灰度开放			
-			模型子账号并发额度配置			按模型接口的子账号并发流量额度配置（tokens、RPM）			
-			智能体子账号并发额度配置			按智能体接口的子账号并发流量额度配置（RPM）			
+					智能灰度升级	模型升级时，自动根据部门成员的调用请求，灰度开放			
+			模型部门成员并发额度配置			按模型接口的部门成员并发流量额度配置（tokens、RPM）			
+			智能体部门成员并发额度配置			按智能体接口的部门成员并发流量额度配置（RPM）			
 			限流告警推送			可支持设置告警门限，展示告警列表，支持API			
 				模型安全过滤开关		按模型和子AK粒度配置安全过滤开关，支持输入输出过滤			
 				自定义安全内容配置		自定义安全过滤规则			
 				数据加密传输		支持数据加密传输保护			
 				操作日志审计		支持按用户+模型（智能体）记录配置变更的操作日志			
 上下文管理		上下文窗口自动优化				自动根据输入token进行适配模型的窗口，自动分段			
-		智能缓存控制				按主租户和子账号粒度，进行常见问题缓存记录，命中缓存			
+		智能缓存控制				按主租户和部门成员粒度，进行常见问题缓存记录，命中缓存			
 		短期记忆				自动结合近N轮上下文进行短期记忆记录			
-		长期记忆				支持自定义长期记忆维度，针对子账号开通长记忆记录			
+		长期记忆				支持自定义长期记忆维度，针对部门成员开通长记忆记录			
 
 ## 2026-04 平台能力建设执行面板
 
@@ -464,18 +499,18 @@
 
 #### P1 组织与授权底座
 
-- [x] P1-01 设计组织树、子部门、子账号归属领域模型（Portal/Console）
-  结果：已落地 `org_department`、`org_account_membership` 领域模型与根部门初始化逻辑，固定“每个账号最多一个直属父账号、最多一个所属部门、父子账号只做管理归属不做权限继承”的规则，并同步进入 Portal/Console 共享 PostgreSQL。
+- [x] P1-01 设计组织树、子部门、部门成员归属领域模型（Portal/Console）
+  结果：已落地 `org_department`、`org_account_membership` 领域模型与根部门初始化逻辑，固定“每个账号最多一个所属部门，由部门管理员负责管理本部门树成员”的规则，并同步进入 Portal/Console 共享 PostgreSQL。
 - [x] P1-02 废弃 `portal_user.department` 并切换到新组织字段（Portal/Console）
-  结果：已按“不考虑兼容”方案执行，Portal 注册请求移除 `department`，登录态 `AuthUser` 改为返回 `departmentId`、`departmentName`、`departmentPath`、`parentConsumerName`；Console 与 Portal 均不再读写旧 `portal_user.department` 作为组织真相源，现有账号统一通过 membership 进入“未分配部门、无父账号”状态。
+  结果：已按“不考虑兼容”方案执行，Portal 注册请求移除 `department`，登录态 `AuthUser` 改为返回 `departmentId`、`departmentName`、`departmentPath`、`adminConsumerName`、`isDepartmentAdmin`；Console 与 Portal 均不再读写旧 `portal_user.department` 作为组织真相源，现有账号统一通过 membership 进入“未分配部门”状态。
 - [x] P1-03 设计 `asset_grant` 授权模型（Portal/Console）
   结果：已新增 `asset_grant` 表和 Console `/v1/assets/{type}/{assetId}/grants` 管理接口，固定首轮主体仅支持 `consumer` / `department` 两类授权对象，并补齐 replace/list 语义。
-- [x] P1-04 规划 Console 组织树与子账号分配界面/API（Console）
-  结果：已新增 `/v1/org/departments/tree`、部门增改移删、账号列表/创建/更新/分配/状态更新接口，并将 Console `/consumer` 页面重构为“组织树 + 账号列表 + 部门管理 + 父账号分配”视图。
+- [x] P1-04 规划 Console 组织树与部门管理员界面/API（Console）
+  结果：已新增 `/v1/org/departments/tree`、部门增改移删、账号列表/创建/更新/分配/状态更新接口，并将 Console `/consumer` 页面重构为“组织树 + 账号列表 + 部门管理 + 部门管理员指定”视图。
 - [x] P1-05 定义授权投影到现有 consumer/AK 的网关对接（Console/Higress）
   结果：已新增 `AuthorizationSubjectResolver`，固定“直接用户授权 + 部门子树授权”展开规则，保持 API Key 继承所属 `consumer_name` 身份，继续复用现有 `key-auth` / `allowedConsumerLevels` 运行时协议，不引入 AK 独立授权表。
 - [x] P1-06 定义组织与授权回归场景（Portal/Console/Higress）
-  结果：已完成 P1 主流程回归与补强实现，Portal 后端新增“父账号可管理下级子账号”的目标账号授权校验、子账号列表、余额调整和用户等级/状态更新接口，Portal 前端新增“子账号管理”页并支持在账单页、开放平台页切换到子账号视角管理总消费、充值、API Key；同时验证 `go test ./...` 与 `npm run build` 在 `aigateway-portal` 通过，Console 编译与前端构建结果已在 `task.md` 留痕。额外完成 Console 创建账号故障修复：`PortalUserJdbcService` 已处理缺省 `email` 的空值回填，避免 `portal_user.email` 非空约束触发 `Failed to upsert portal user.`，并已在滚动后的真实 Console 实例上用带 `departmentId`、`parentConsumerName` 的原始请求验证通过。
+  结果：已完成 P1 主流程回归与补强实现，Portal 后端新增“部门管理员可管理本部门树成员”的目标账号授权校验、成员列表、余额转账和用户等级/状态更新接口，Portal 前端新增“部门成员管理”页并支持在账单页、开放平台页切换到成员视角管理总消费、充值、API Key；同时验证 `go test ./...` 与 `npm run build` 在 `aigateway-portal` 通过，Console 编译与前端构建结果已在 `task.md` 留痕。额外完成 Console 创建账号故障修复：`PortalUserJdbcService` 已处理缺省 `email` 的空值回填，避免 `portal_user.email` 非空约束触发 `Failed to upsert portal user.`，并已在滚动后的真实 Console 实例上用带 `departmentId` 的原始请求验证通过。
 
 #### P2 模型资产与商业化
 
@@ -509,13 +544,13 @@
 
 #### P4 观测、高可用、流控
 
-- [ ] P4-01 设计按子账号、模型、智能体的调用统计口径（Portal/Console）
+- [ ] P4-01 设计按部门成员、模型、智能体的调用统计口径（Portal/Console）
   验收：明确统计维度、聚合周期、指标字段和对账口径。
 - [ ] P4-02 规划请求级调用明细查询链路（Portal/Console）
   验收：明确查询入口、索引条件、权限边界和查询性能要求。
 - [ ] P4-03 设计 `ai-load-balancer` 的 region/cost/latency 路由策略（Higress）
   验收：形成路由输入参数、权重计算、回退条件和观测字段。
-- [ ] P4-04 规划 fallback 与子账号灰度放量（Console/Higress）
+- [ ] P4-04 规划 fallback 与部门成员灰度放量（Console/Higress）
   验收：明确备用模型切换规则、灰度分流粒度和配置入口。
 - [ ] P4-05 设计并发/RPM 配额能力，优先扩展 `ai-token-ratelimit` 或拆 `ai-concurrency-limit`（Console/Higress）
   验收：形成限流能力选型、配置模型、运行时字段和拒绝语义。
@@ -532,7 +567,7 @@
   验收：明确审计字段、记录主体、查询条件和保留策略。
 - [ ] P5-04 设计上下文窗口自动优化（Portal/Higress）
   验收：形成输入 token 评估、自动分段、模型窗口适配和失败兜底逻辑。
-- [ ] P5-05 规划 `ai-cache`、`ai-history` 的租户与子账号隔离（Portal/Higress）
+- [ ] P5-05 规划 `ai-cache`、`ai-history` 的租户与部门成员隔离（Portal/Higress）
   验收：明确缓存命名空间、隔离粒度、命中规则和清理边界。
 - [ ] P5-06 规划长期记忆服务，默认基于 `ai-rag + 向量库`（Portal/Console/Higress）
   验收：形成长期记忆对象、召回链路、授权边界和首轮向量库方案。

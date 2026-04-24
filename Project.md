@@ -1,6 +1,6 @@
 # AIGateway Group 协作基线
 
-最后更新：2026-04-22
+最后更新：2026-04-24
 
 ## 1. 文档主控体系
 
@@ -19,27 +19,33 @@
 - `Memory.md`
   - 记录历史决策、验证事实、排障结论和注意事项
 
-### 1.2 发布 / 部署主控
+### 1.2 根级 TASK 索引
 
 - `TASK/README.md`
-- `TASK/P0-release-baseline.md` ~ `TASK/P7-e2e-validation-and-docs.md`
+  - 根级 TASK 总索引
+- `TASK/release/README.md`
+- `TASK/release/P0-release-baseline.md` ~ `TASK/release/P7-e2e-validation-and-docs.md`
+  - 发布 / 部署 / bundle / HA / 正式验收主控
+- `TASK/projects/README.md`
+- `TASK/projects/<subproject>/`
+  - 子项目专项材料索引、迁移记录、分析矩阵、协议文档等根级补充材料
 
-这组文档只负责 release bundle、部署目标、HA、发布验收，不承担日常产品研发状态记录。
+根级 `TASK/` 不再只承载 release 台账，也负责统一索引跨子项目专项文档，避免 AI Agent 在各子项目里分散找材料。
 
 ### 1.3 正式交付文档
 
 - `docs/overview/`
   - 对外 / 对管理层 / 对新同学的项目介绍与白皮书
-- `docs/release/1.0.0/`
+- `docs/release/<current-release>/`
   - 发布说明、镜像包说明、K8S/K3D&Helm 部署说明
-- `docs/manual/1.0.0/`
+- `docs/manual/<current-release>/`
   - 用户手册、页面截图、访问入口说明
 
 ## 2. 子项目职责边界
 
 | 子项目 | 路径 | 主要职责 |
 | --- | --- | --- |
-| Portal | `aigateway-portal` | 门户前后端、登录、API Key、账单、发票、模型广场、智能体广场 |
+| Portal | `aigateway-portal` | 门户前后端、本地登录 + OIDC SSO、API Key、账单、发票、模型广场、智能体广场 |
 | Console | `aigateway-console` | 控制面前后端、组织与用户、模型资产、AI Route、MCP、运行时配置 |
 | Higress | `higress` | 网关核心、控制面 / 数据面、插件与 Helm 基座 |
 | Plugin Server | `plugin-server` | Wasm 插件分发与插件元数据服务 |
@@ -57,10 +63,16 @@
 
 ### 3.2 版本与发布口径
 
-- 当前正式发布版本固定为 `1.0.0`
-- 本仓库管理的一方镜像在正式发布时统一打 `1.0.0`
+- 当前正式发布版本以显式版本源为准，不在本文件写死具体版本号
+- 开发阶段可以读取当前 Git 分支理解当前工作上下文，但不要从分支名直接推导正式版本号
+  - 分支名可能是 `dev`、功能分支，也可能是版本分支
+  - Git 分支只用于辅助判断当前工作流，不是正式版本真相源
+  - AI Agent 在开发阶段应先区分“当前工作分支语境”和“正式发布口径”，避免把历史 release 约束误投到日常开发任务
+- 本仓库管理的一方镜像在正式发布时统一打“当前正式发布版本”
 - 第三方依赖镜像保持上游版本，通过 bundle 元数据和 Helm values 锁定
+- release 版本判断优先参考 `helm/image-versions.yaml`、release bundle 元数据和 `docs/release/<version>/`，而不是从分支名猜测
 - 正式发布接口固定为：
+  - `./start.sh test --stage unit|integration|e2e|acceptance|release|all`
   - `./start.sh release-build`
   - `./start.sh release-deploy --target k3d|k8s`
 
@@ -68,6 +80,8 @@
 
 - `./start.sh`
   - 仓库统一高层入口
+- `./start.sh test`
+  - 仓库统一测试闸门入口
 - `./helm/image-versions.yaml`
   - 仓库管理镜像 repository / tag、bundle 默认参数、namespace / releaseName 的单一事实源
 - `./helm/dev-mode.yaml`
@@ -82,7 +96,7 @@
 正式 release bundle 默认目录命名为：
 
 ```text
-out/release/aigateway-1.0.0/
+out/release/aigateway-<current-release>/
 ```
 
 bundle 结构固定包含：
@@ -108,9 +122,9 @@ deploy.sh
 
 所有正式发布口径统一写入：
 
-- `docs/release/1.0.0/release-notes.md`
-- `docs/release/1.0.0/image-bundle.md`
-- `docs/release/1.0.0/deployment-guide.md`
+- `docs/release/<current-release>/release-notes.md`
+- `docs/release/<current-release>/image-bundle.md`
+- `docs/release/<current-release>/deployment-guide.md`
 
 ## 5. 协作规则
 
@@ -120,8 +134,12 @@ deploy.sh
 - 历史结论、验证结果和重要 caveat 写入 `Memory.md`
 - 发布链路、bundle 契约、部署命令变化时同步更新：
   - `TASK/README.md`
+  - `TASK/release/README.md`
   - `helm/README.md`
-  - `docs/release/1.0.0/`
+  - `docs/release/<current-release>/`
+- 子项目专项材料迁移、根级索引或 AI Agent 阅读入口变化时同步更新：
+  - `TASK/projects/README.md`
+  - `TASK/projects/<subproject>/README.md`
 - 不允许只改脚本 / values / Chart 而不改文档
 
 ## 6. 关联文档
@@ -130,6 +148,8 @@ deploy.sh
 - 当前工作台：[`task.md`](./task.md)
 - 执行清单：[`TODO.md`](./TODO.md)
 - 历史记录：[`Memory.md`](./Memory.md)
-- 发布台账：[`TASK/README.md`](./TASK/README.md)
+- TASK 总索引：[`TASK/README.md`](./TASK/README.md)
+- 发布台账：[`TASK/release/README.md`](./TASK/release/README.md)
+- 子项目专项索引：[`TASK/projects/README.md`](./TASK/projects/README.md)
 - Helm 与开发入口：[`helm/README.md`](./helm/README.md)
 - 正式文档索引：[`docs/README.md`](./docs/README.md)

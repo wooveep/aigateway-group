@@ -3,7 +3,7 @@
 > 文档职责：本文件只记录“当前进行中、阻塞项、最近更新、最近验证”。  
 > 稳定边界看 `Project.md`，执行清单看 `TODO.md`，发布 / 部署台账看 `TASK/README.md`。
 
-更新时间：2026-04-22
+更新时间：2026-04-24
 
 ## 当前阶段
 
@@ -20,7 +20,7 @@
 - [ ] P3/P5-AF 模型资产 RPM/TPM 投影到每用户每模型限流
   结果：Console 已新增 `ai-model-rate-limit-reconcile`、`ai-model-rate-limit-projections/default`、`cluster-key-rate-limit / ai-token-ratelimit` builtin runtime 规则同步；`AI Route` 的 `modelPredicates` 已真正投影到 `x-higress-llm-model` ingress 匹配，当前只对单条 `EQUAL(model_id)` 路由自动生效，并记录 skip reason。
   验证：`cd aigateway-console/backend && go test ./utility/clients/k8s ./internal/service/jobs ./internal/service/gateway ./internal/cmd`
-  阻塞：尚未完成 live cluster smoke，仍需在 `minikube-dev` 环境验证 fallback/internal route、429 行为和 `/system/jobs` 手工触发链路。
+  阻塞：`2026-04-23` 在 `minikube-dev` live smoke 中已复现 `POST /qwen/v1/chat/completions` 返回 `401 Request denied by ai quota check. No Key Authentication information found.`；已定位为 builtin `ai-quota` 默认落在 `UNSPECIFIED_PHASE`，导致 public/internal AI Route 上读取不到 `key-auth` 注入的 `x-mse-consumer`，代码已改为 `AUTHN` phase，仍需在重建后继续补 `429` 行为与 `/system/jobs` 手工触发链路验证。
 
 ## 本轮不做
 
@@ -34,6 +34,10 @@
 
 ## 今日更新
 
+- 已新增仓库级测试闸门入口 `./start.sh test --stage <unit|integration|e2e|acceptance|release|all>`，统一编排 Portal/Console 后端、关键 Higress runtime 插件、Portal/Console 前端黑盒、Chrome DevTools 验收以及 release dry-run。
+- 已将 Go 集成测试切到 `integration` build tag：Portal/Console 的 PostgreSQL/Testcontainers 用例不再混入默认 `go test ./...`，避免发布前的 unit gate 与 integration gate 混在一起。
+- 已补 Portal Playwright smoke、扩展 Console Playwright 页面覆盖，并新增 `plugin-server` 最小 Python 单测。
+- 已新增 `TASK/release/acceptance/` 与 `scripts/validate-acceptance.py`，`./start.sh test --stage acceptance` 会生成/校验 Chrome DevTools 验收产物，并将未完成验收视为阻断。
 - 根文档体系已收口为“研发 / 产品主控”与“发布 / 部署主控”两条主线，并以 `AGENTS.md` 固化读取顺序和同步规则。
 - 已建立正式 `docs/` 文档源码目录，承载 `1.0.0` 白皮书、发布说明和用户手册。
 - `1.0.0` 正式版本规则已固定：仓库管理的一方镜像统一使用 `1.0.0`，第三方依赖通过 bundle 与 Helm values 锁定。
@@ -43,6 +47,14 @@
 - `P3/P5-AF` 已完成首版实现：模型资产发布配置的 `RPM/TPM` 会按 `70%` 生成每用户每模型限流规则，`RPM -> cluster-key-rate-limit`，`TPM -> ai-token-ratelimit`，并绑定到 `AI Route` 的 public/internal/fallback ingress。
 - `P3/P5-AF` 已补控制面闭环：`gateway` 写路径新增 `ai-route-save/delete` hook，`model-binding-*` 和 `ai-route*` 变更都会触发 `ai-model-rate-limit-reconcile`；projection 资源更新后会自动同步 builtin `WasmPlugin matchRules`。
 - `P3/P5-AF` 已补测试：`AI Route modelPredicates -> x-higress-llm-model`、memory client projection sync、以及 `ai-model-rate-limit-reconcile` 的规则生成 / skip reason 都已有 Go 单测覆盖。
+- `P3/P5-AF` live smoke 已定位一处运行时回归：`ai-quota` 默认 phase 若为 `UNSPECIFIED_PHASE`，public `AI Route` 会在 `key-auth` 之前执行并返回 `ai-quota.no_key`；当前已把控制面 builtin manifest 契约修正为 `AUTHN`，并在 `minikube-dev` 下用 `api.ai.local/qwen/v1/chat/completions` 实测恢复 `200`。
+- Portal OIDC SSO 首版已完成：Portal 共享库已新增 `portal_sso_config` / `portal_user_sso_identity`，Portal 后端已接入 OIDC authorize/callback 流程并支持邮箱首绑、自动创建 `pending` 账号；Console `/system` 页面已新增 Portal SSO 配置区块，保存时会校验 OIDC discovery 文档并把配置写入共享库。
+- Portal OIDC SSO 与组织管理已完成第二轮收口：Console 组织页已新增 SSO pending 账号改绑入口，改绑继续复用 `portal_user_sso_identity`，成功后原自动建档账号会执行软删除；新建部门已支持“选择已有活跃用户”或“同步新建管理员账号”两种模式，并在复用已有用户时自动迁移部门归属与旧管理员绑定。
+- `P1-04 / P1-06` 已完成模型收口：正式废弃“父账号 / 子账号”管理模型，Portal 与 Console 统一按“部门树 + 部门管理员 + 部门成员”实现；Portal 已支持部门管理员创建当前部门成员、成员视角账单/API Key 管理和管理员余额转账，Console 已要求新建部门时同步创建管理员账号，并支持在编辑部门时改绑当前部门活跃管理员。
+- `P1-04 / P1-06` 组织页口径已补充更新：Console 现在保留“新建部门即建管理员账号”兼容路径，但默认支持从已有活跃用户中搜索并选择部门管理员；组织账号删除入口已明确为软删除，不做物理删除。
+- `P3-AF-07 ~ P3-AF-11` 已完成：`ai-proxy`、Console、Portal 已统一收口 `protocol / capability / endpoint / request path` 边界；一级 protocol 固定为 `openai/v1`、`anthropic/v1/messages`、`original`，Provider 资源额外允许 `auto`；Console 已新增 `provider-protocol-directory`，前端 Provider 与 Model Binding 表单已改为受控协议下拉，并按 `provider-api-docs/<provider>/` 子目录中的官方文档计算 `providerDocsStatus`。
+- `P3-AF-08` 运行时语义已固定：`provider.protocol=""` 保留自动检测，显式 `openai` 仍允许 Claude `/v1/messages` 自动兜底，显式 `anthropic` 固定按 Claude `messages` 入口处理，显式 `original` 才完全关闭 OpenAI / Claude 自动检测。
+- `P3-AF-09 / P3-AF-10` 已补最小验证：`higress/plugins/wasm-go/extensions/ai-proxy`、`aigateway-console/backend/internal/service/gateway`、`aigateway-console/backend/internal/service/portal`、`aigateway-portal/backend/internal/client/k8s` 定向 Go 测试通过，`aigateway-console/frontend` 构建通过。
 - `P3-01` 已完成：Console 后端已新增 `portal_agent_catalog` 表、`AgentCatalogRecord` 模型、`/v1/ai/agent-catalog` CRUD/发布/下架接口，并固定一个 agent 绑定一个 Higress MCP Server。
 - `P3-02` 已完成：Console 前端已新增“智能体目录管理”页面，支持新建、编辑、发布/下架、授权管理以及 MCP HTTP / SSE 地址复制。
 - `P3-03` 已完成：`asset_grant` 已新增 `agent_catalog` 资产类型；保存授权时若目标 agent 已发布，会同步把 grant 展开的 consumer 名单投影到目标 MCP Server 的 `consumerAuthInfo.allowedConsumers`。
@@ -62,12 +74,12 @@
 - `P0-06` 已完成：已新增项目级 skill，覆盖“仓库导览 / 开发环境启动 / 当前阶段状态读取”，并将使用边界写入 `Project.md` 团队约定。
 - `P1-01` 已完成：Portal/Console 共用 PostgreSQL 已新增 `org_department`、`org_account_membership`，并在启动时自动创建虚拟根部门和未分配 membership。
 - 文档/skill 口径更新：根级文档、Portal/Console 项目文档与项目级 skill 已统一更新为 PostgreSQL-only；历史 MySQL 表述仅保留在迁移记录中。
-- `P1-02` 已完成：按“无兼容路径”方案移除 Portal 注册页的 `department` 输入，Portal 登录态改为返回 `departmentId`、`departmentName`、`departmentPath`、`parentConsumerName`。
+- `P1-02` 已完成：按“无兼容路径”方案移除 Portal 注册页的 `department` 输入，Portal 登录态改为返回 `departmentId`、`departmentName`、`departmentPath`、`adminConsumerName`、`isDepartmentAdmin`。
 - `P1-03` 已完成：Console 已新增 `asset_grant` 表服务、资产授权管理接口与 `AuthorizationSubjectResolver` 授权展开逻辑。
-- `P1-04` 已完成：Console 已新增 `/v1/org/*` 接口，并将 `/consumer` 页面重构为组织树、部门管理、账号创建编辑和父账号分配视图。
+- `P1-04` 已完成：Console 已新增 `/v1/org/*` 接口，并将 `/consumer` 页面重构为组织树、部门管理、账号创建编辑和部门管理员指定视图。
 - `P1-05` 已完成：现有 `key-auth` / `allowedConsumerLevels` 运行时协议保持不变，API Key 继续继承所属 `consumer_name`，首轮不新增 AK 独立授权模型。
-- `P1-06` 已完成：Portal 已新增父账号对子账号的管理视图与接口，支持列出所有下级子账号、切换到子账号视角查看账单和 API Key，并支持调整余额、修改用户等级和状态。
-- `P1-06` 已补充验证：已在运行中的 Console 实例上复现 `POST /v1/org/accounts` 因缺省 `email` 导致 `portal_user.email` 非空约束失败的问题；修正 `PortalUserJdbcService` 的空值回填后，重建并滚动 `aigateway-console`，用 `admin/admin` 登录后以 `consumerName=testa`、`departmentId=410c6127959c40ceb677dc0ee512d54e`、`parentConsumerName=liyuntian` 的原始请求实测创建成功。
+- `P1-06` 已完成：Portal 已新增部门管理员对部门树成员的管理视图与接口，支持列出可管理成员、切换到成员视角查看账单和 API Key，并支持管理员与成员之间的余额转账、成员账号创建以及用户等级和状态更新。
+- `P1-06` 已补充验证：已在运行中的 Console 实例上复现 `POST /v1/org/accounts` 因缺省 `email` 导致 `portal_user.email` 非空约束失败的问题；修正 `PortalUserJdbcService` 的空值回填后，重建并滚动 `aigateway-console`，用 `admin/admin` 登录后以 `consumerName=testa`、`departmentId=410c6127959c40ceb677dc0ee512d54e` 的原始请求实测创建成功。
 - `P2-01` 已进入第二轮收口：Console 已新增 `model-assets` 控制面入口，Provider 页不再作为正式上架和定价入口；Provider CRUD 不再自动直写 Portal 模型价格。
 - `P2-02` 已启动开发准备：已确认第二轮不把两档定价建在旧 Provider 定价链路上，而是把绑定草稿价格作为编辑态、把 `billing_model_price_version` 继续作为已发布价格真相源。
 - 已确认价格版本回滚语义：历史版本只支持“恢复到草稿并重新发布”，不提供直接激活旧版本的入口。
@@ -83,6 +95,9 @@
 
 ## 验证记录
 
+- 已执行 `bash -n start.sh scripts/test.sh`，新增仓库级测试入口脚本语法通过。
+- 已执行 `python3 -m py_compile scripts/validate-acceptance.py plugin-server/generate_metadata.py plugin-server/pull_plugins.py plugin-server/tests/test_plugin_scripts.py`，新增 Python 验收/插件脚本语法通过。
+- 已执行 `cd plugin-server && python3 -m unittest discover -s tests -p 'test_*.py'`，`plugin-server` 新增最小单测通过。
 - 已核对 `TODO.md`、`roadmap.md`、`task.md` 的任务编号和阶段划分一致。
 - 已核对 `roadmap.md` 包含“背景与目标、当前能力对比、阶段路线图、插件改造清单、里程碑验收、风险与默认项”六个固定章节。
 - 已核对 `task.md` 中所有任务都引用 `TODO.md` 中的任务 ID，不存在孤立任务。
@@ -90,8 +105,8 @@
 - 已执行 `npm run build`，`aigateway-console/frontend` 构建通过，新的 `/consumer` 页面代码已进入生产构建。
 - 已执行 `go test ./...`，`aigateway-portal/backend` 测试通过。
 - 已执行 `npm run build`，`aigateway-portal/frontend` 构建通过，Portal 注册页与登录态类型改动已通过前端构建验证。
-- 已执行 `go test ./...`，`aigateway-portal/backend` 在新增子账号管理能力后继续通过。
-- 已执行 `npm run build`，`aigateway-portal/frontend` 在新增“子账号管理”页与子账号视角切换后继续通过。
+- 已执行 `go test ./...`，`aigateway-portal/backend` 在切换到“部门树 + 部门管理员 + 部门成员”模型后继续通过。
+- 已执行 `npm run build`，`aigateway-portal/frontend` 在新增“部门成员管理”页与成员视角切换后继续通过。
 - 已在真实运行环境完成接口复现与验证：旧 Console Pod 日志明确报错 `Column 'email' cannot be null`；滚动到新 Pod `aigateway-console-5f9f5fcd57-lwbd4` 后，通过本地端口转发到 `127.0.0.1:18080`，以 `admin/admin` 登录并调用 `POST /v1/org/accounts`，用户 `testa` 创建成功。
 - 已确认 `P2-02` 至 `P2-06` 的顺序和依赖关系，不与 `P2-01` 并行启动。
 - 已确认第二轮范围：先收口 `P2-01` 的控制面与 Portal 读取切换，再推进 `P2-02` 的两档价格编辑、active 版本切换、历史回显和“恢复到草稿”链路。
@@ -106,6 +121,12 @@
 - 已执行 `./mvnw -q -pl console -am -DskipTests -Dpmd.skip=true compiler:compile`，`aigateway-console/backend` 的 `model-assets/options` 接口、能力字段白名单校验和既有 `asset_grant user_level` / AI 脱敏改动编译通过。
 - 已执行 `go test ./...`，`aigateway-portal/backend` 的模型绑定 `user_level` 可见性过滤回归通过。
 - 已执行 `go test ./...`，`aigateway-portal/backend` 的 `agent_catalog` 查询、AI 会话持久化、SSE 流式对话和模型/API Key 作用域校验代码通过。
+- 已执行 `cd aigateway-portal/backend && go test ./internal/service/portal/... ./internal/controller/portal/... ./internal/model/... ./schema/shared/...`，部门成员管理与余额转账改造后的 Portal 后端测试通过。
+- 已执行 `cd aigateway-portal/frontend && npm run build`，Portal 前端的“部门成员管理”页、新建成员与成员视角改造通过构建。
+- 已执行 `cd aigateway-console/backend && go test ./internal/service/portal/... ./internal/controller/portal/... ./utility/clients/portaldb/...`，部门管理员创建/改绑与 membership 清理后的 Console 后端测试通过。
+- 已执行 `cd aigateway-console/frontend && npm run build`，Console `/consumer` 页面新增“建部门即建管理员 / 编辑部门改绑管理员”流程后通过构建。
+- 已执行 `cd aigateway-console/backend && go test ./internal/service/portal`、`cd aigateway-console/backend && go test -run '^$' ./internal/service/portal ./internal/controller/portal ./internal/cmd/...`、`cd aigateway-console/frontend && npm run build`，Portal SSO 配置读写、共享 schema mock 与 `/system` 页面改造通过验证。
+- 已执行 `cd aigateway-portal/backend && go test ./internal/service/portal ./internal/controller/portal ./internal/cmd/...`、`cd aigateway-portal/frontend && npm run build`，Portal OIDC SSO 后端 authorize/callback 链路与登录/注册页入口改造通过验证。
 - 已执行 `npm run build`，`aigateway-portal/frontend` 的全站 `DESIGN.md` 风格壳层、智能体广场和 `AI对话` 页面通过生产构建。
 - 已执行 `./mvnw -q -pl console -am -DskipTests -Dpmd.skip=true compiler:compile`，`aigateway-console/backend` 的 `agent-catalog` 控制器、JDBC service 和 grant -> MCP 授权投影代码可编译通过。
 - 已执行 `npm run build`，`aigateway-console/frontend` 的“智能体目录管理”菜单、页面、授权抽屉和地址复制功能通过生产构建。

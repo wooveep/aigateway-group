@@ -10,6 +10,7 @@
 - 仓库管理的一方镜像统一使用 `1.0.0`
 - 第三方依赖镜像保持上游版本，通过 `images.lock` 与 Helm values 锁定
 - 正式发布接口保持为：
+  - `./start.sh test --stage unit|integration|e2e|acceptance|release`
   - `./start.sh release-build`
   - `./start.sh release-deploy --target k3d|k8s`
 
@@ -29,6 +30,10 @@
 - `./start.sh help`
 - `./start.sh show`
 - `./start.sh sync --check`
+- `./start.sh test --stage unit`
+- `./start.sh test --stage integration`
+- `./start.sh test --stage e2e`
+- `./start.sh test --stage acceptance`
 - `./start.sh release-build --dry-run`
 - `./start.sh release-deploy --target k8s --registry registry.example.com/team --dry-run`
 - release values 的 `helm template`

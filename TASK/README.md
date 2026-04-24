@@ -1,72 +1,55 @@
-# 发布与部署任务台账
+# 全局 TASK 文档索引
 
-> 文档职责：本目录只负责 release bundle、部署目标、HA、发布回归和验收台账。  
-> 日常产品研发状态不写在这里，统一回 `task.md` / `TODO.md` / `Memory.md`。
+> 文档职责：根目录 `TASK/` 是全仓库统一任务与专项文档索引入口。  
+> 子项目目录内只保留该项目自身的说明与轻量执行文档；跨子项目、专项分析、发布部署和 AI Agent 需要统一理解的索引，一律收口到根目录。
 
-## 状态约定
+## 目录结构
 
-- `todo`：尚未开始
-- `doing`：正在进行
-- `done`：已完成
-- `blocked`：被外部条件阻塞
+### 1. 发布 / 部署主线
 
-## 阶段顺序
+- `TASK/release/README.md`
+- `TASK/release/P0-release-baseline.md` ~ `TASK/release/P7-e2e-validation-and-docs.md`
 
-1. `P0-release-baseline.md`
-2. `P1-release-bundle-shell-foundation.md`
-3. `P2-release-deploy-targets.md`
-4. `P3-dataplane-ha-and-upstream-lb.md`
-5. `P4-redis-ha-and-postgresql-platform.md`
-6. `P5-console-postgresql-cutover.md`
-7. `P6-portal-postgresql-cutover.md`
-8. `P7-e2e-validation-and-docs.md`
+这组文档只负责 release bundle、部署目标、HA、发布回归和正式验收。
 
-## 统一要求
+### 2. 子项目专项索引主线
 
-- 每阶段都要补充“验收点”和“测试”。
-- 每阶段完成后都要更新本台账的“当前进度 / 当前焦点 / 最近更新”。
-- 变更脚本入口、Helm values、镜像清单、依赖 chart、应用数据库配置或发布文档时，需要同步更新对应阶段文档。
-- 发布链路坚持纯 Shell，不引入 Python 作为发布入口依赖。
-- 发布数据库主线固定为 PostgreSQL，默认内置 pgvector；本轮不包含 MySQL 到 PostgreSQL 的存量迁移工具。
+- `TASK/projects/README.md`
+- `TASK/projects/aigateway-console/`
+- `TASK/projects/aigateway-portal/`
+- `TASK/projects/higress/`
+- `TASK/projects/plugin-server/`
 
-## 当前进度
+这组文档负责：
 
-- `P0`：done
-- `P1`：done
-- `P2`：done
-- `P3`：done
-- `P4`：done
-- `P5`：done
-- `P6`：done
-- `P7`：doing
+- 跨子项目阅读时的专项文档索引
+- AI Agent 需要理解的项目特有补充材料
+- 迁移记录、专项矩阵、协议文档、对齐分析等不适合散落在子项目根目录的内容
 
-## 当前焦点
+## 子项目本地文档约束
 
-- 主阶段：`P7`
-- 当前重点：
-  - 完成 release bundle 的 dry-run / 模板渲染 / PostgreSQL smoke 回归记录。
-  - 在具备 `k3d` 和可推送 registry 的环境补齐完整端到端发布验收。
-  - 将 `1.0.0` 正式版本口径、bundle 命名与正式交付文档统一收口。
+每个子项目根目录只保留本项目自身的轻量入口文档：
 
-## 最近更新
+- `README.md`
+- `project.md`
+- `TODO.md`
+- `TASK.md`
 
-- 根级 `TASK/` 已建立，作为本次发布与部署改造的唯一任务台账。
-- 已确定阶段顺序为 `P0 -> P1 -> P2 -> P3 -> P4 -> P5/P6 -> P7`。
-- 已落下发布骨架：
-  - `./scripts/release-build.sh`
-  - `./scripts/release-deploy.sh`
-  - `./start.sh release-build`
-  - `./start.sh release-deploy`
-- 已完成：
-  - bundle 输出目录与镜像 `tar` 元数据
-  - `k3d` / 通用 `k8s` 部署脚本接口
-  - 数据面多副本与对上游 API 的多副本负载模板
-  - Redis HA
-  - PostgreSQL HA + pgvector 基础接入
-- 新增完成项：
-  - `console` 侧补齐 PostgreSQL rebind driver，并清理 portal store / platform state store / membership upsert 的 MySQL 专用 SQL。
-  - `portal` 侧共享 schema、迁移器、账单投影、组织与模型目录 upsert 已切到 PostgreSQL 兼容语义。
-  - 新增 PostgreSQL 容器烟测，覆盖 console portaldb 迁移链路和 portal 读取 shared schema 链路。
-  - `helm/README.md` 与当前 agent skill 已同步发布回归命令清单，并移除过期的 PostgreSQL 兼容性说明。
-  - `P7` 已补齐当前 smoke 记录：`show / sync --check / release-build --dry-run / helm template / k8s release-deploy --dry-run / PostgreSQL smoke`。
-  - 已确认 `release-build --skip-build` 对本地 dev tag 镜像有前置依赖；当镜像未就绪时，bundle 会在 `docker save` 阶段失败。
+如项目已存在 `memory.md` 等历史材料，可暂时保留，但根目录 `TASK/projects/<subproject>/README.md` 必须给出索引，避免 AI Agent 漏读。
+
+## AI Agent 读取顺序
+
+1. 先看根目录 `Project.md`
+2. 再看根目录 `task.md`
+3. 再看根目录 `TODO.md`
+4. 再看根目录 `Memory.md`
+5. 根据任务类型进入：
+   - 发布 / 部署：`TASK/release/README.md`
+   - 子项目专项材料：`TASK/projects/README.md`
+6. 最后回到对应子项目根目录的 `README.md` / `project.md` / `TODO.md` / `TASK.md`
+
+## 当前索引重点
+
+- 发布与部署：见 `TASK/release/`
+- Console GoFrame 重写 / Java parity / provider 协议专项：见 `TASK/projects/aigateway-console/`
+- Portal / Higress / Plugin Server 当前先以项目根目录轻量文档为主，根目录 `TASK/projects/` 负责统一入口索引

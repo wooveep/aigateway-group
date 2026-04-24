@@ -1,0 +1,40 @@
+{
+  "tool": "chrome-devtools",
+  "executedAt": "",
+  "operator": "",
+  "baseUrls": {
+    "console": "",
+    "portal": ""
+  },
+  "artifacts": {
+    "screenshotsDir": "screenshots",
+    "notesFile": "notes.md"
+  },
+  "pages": [
+    { "id": "console-login", "status": "todo", "path": "/login", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-dashboard", "status": "todo", "path": "/dashboard", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-consumer", "status": "todo", "path": "/consumer", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-model-assets", "status": "todo", "path": "/ai/model-assets", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-provider", "status": "todo", "path": "/ai/provider", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-ai-route", "status": "todo", "path": "/ai/route", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-ai-quota", "status": "todo", "path": "/ai/quota", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-agent-catalog", "status": "todo", "path": "/ai/agent-catalog", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-mcp-list", "status": "todo", "path": "/mcp/list", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-system-jobs", "status": "todo", "path": "/system/jobs", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-login", "status": "todo", "path": "/login", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-models", "status": "todo", "path": "/models", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-agents", "status": "todo", "path": "/agents", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-ai-chat", "status": "todo", "path": "/ai-chat", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-billing", "status": "todo", "path": "/billing", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-open-platform", "status": "todo", "path": "/open-platform", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-accounts", "status": "todo", "path": "/accounts", "consoleErrors": [], "networkFailures": [], "screenshots": [] }
+  ],
+  "flows": [
+    { "id": "console-ai-route-edit", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-model-binding-publish", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "console-agent-publish-toggle", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-api-key-create", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-recharge-submit", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] },
+    { "id": "portal-ai-chat-send", "status": "todo", "consoleErrors": [], "networkFailures": [], "screenshots": [] }
+  ]
+}

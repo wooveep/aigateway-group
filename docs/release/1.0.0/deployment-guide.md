@@ -13,6 +13,10 @@
 ```bash
 ./start.sh show
 ./start.sh sync --check
+./start.sh test --stage unit
+./start.sh test --stage integration
+./start.sh test --stage e2e
+./start.sh test --stage acceptance
 ```
 
 ## 3. 生成 bundle
@@ -83,6 +87,9 @@ helm template aigateway ./helm/higress \
 - 真实部署镜像集合以 bundle 中的 `metadata/images.lock` 为准
 
 ## 8. 已知边界
+
+- 若启用 Portal OIDC SSO，需额外把 `aigateway-portal.backend.publicBaseURL` 配置为用户真实访问的 Portal 外部基地址；Portal 会据此生成 `/api/auth/sso/callback`。
+- Console `/system` 页面保存的 OIDC `issuer/client/scopes/claim mapping` 会落到共享 PostgreSQL 的 `portal_sso_config`，因此正式部署时仍要求 Portal/Console 共用同一套 Portal PostgreSQL。
 
 - 如果本机未准备好对应一方镜像，`release-build` 在 `docker save` 阶段会失败
 - 如果缺少可推送 registry，通用 `k8s` 目标无法完成实际部署

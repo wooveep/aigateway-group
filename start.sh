@@ -12,6 +12,7 @@ BUILD_SCRIPT="${ROOT_DIR}/higress/helm/build-local-images.sh"
 PORT_FORWARD_SCRIPT="${ROOT_DIR}/scripts/port-forward-all.sh"
 RELEASE_BUILD_SCRIPT="${ROOT_DIR}/scripts/release-build.sh"
 RELEASE_DEPLOY_SCRIPT="${ROOT_DIR}/scripts/release-deploy.sh"
+TEST_SCRIPT="${ROOT_DIR}/scripts/test.sh"
 
 resolve_repo_path() {
   local candidate="$1"
@@ -635,6 +636,10 @@ cmd_release_deploy() {
     "$@"
 }
 
+cmd_test() {
+  "${TEST_SCRIPT}" "$@"
+}
+
 cmd_sync() {
   local check_only=false
   local components_csv="${BUILD_COMPONENTS}"
@@ -876,6 +881,7 @@ Usage:
   ./start.sh show
   ./start.sh sync [--check] [--components a,b] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
   ./start.sh build [--components a,b] [--skip-sync] [--fresh-tags] [--stamp YYYYMMDDHHMMSS]
+  ./start.sh test --stage unit|integration|e2e|acceptance|release|all
   ./start.sh release-build [release-build args...]
   ./start.sh release-deploy [release-deploy args...]
   ./start.sh minikube-start [--profile name]
@@ -897,6 +903,7 @@ Notes:
   - helm/image-versions.yaml is the single source of truth for local image tags and defaults.
   - console and portal refresh dev tags automatically for build/minikube flows.
   - Release entrypoints are pure shell: ./start.sh release-build / ./start.sh release-deploy
+  - Repo-level quality gate entrypoint: ./start.sh test --stage <stage>
 EOF
 }
 
@@ -913,6 +920,9 @@ main() {
       ;;
     build)
       cmd_build "$@"
+      ;;
+    test)
+      cmd_test "$@"
       ;;
     release-build)
       cmd_release_build "$@"
