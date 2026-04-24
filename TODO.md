@@ -9,7 +9,7 @@
 - [x] 新增 `1.1.0` 发布说明、镜像包说明和 K8S / K3D&Helm 部署说明。
 - [x] 新增 `1.1.0` 项目介绍白皮书。
 - [x] 输出 `1.1.0` release bundle 镜像包。
-  结果：`out/release/aigateway-1.1.0/` 已生成，包含 11 个镜像 tar、`higress-1.1.0.tgz`、release values、`images.lock`、`SHA256SUMS` 与 `deploy.sh`；`SHA256SUMS` 已排除自身并校验通过。
+  结果：`out/release/aigateway-1.1.0/` 已生成，当前 standard profile bundle 包含 13 个镜像 tar、`higress-1.1.0.tgz`、release values、`images.lock`、`SHA256SUMS` 与 `deploy.sh`；`SHA256SUMS` 已排除自身并校验通过。
 - [x] 输出 `1.1.0` 项目介绍 PPT，并覆盖项目架构图与业务逻辑图。
   结果：`out/docs/1.1.0/aigateway-project-introduction-1.1.0.pptx` 已生成，封面资产来自 `imagegen`。
 - [x] 完成 `1.1.0` 发布 dry-run、Helm template 和文档导出校验。
@@ -18,6 +18,12 @@
   结果：Portal 启动迁移已补 `portal_model_binding_price_version`，账单模型 bootstrap 在 K8s 模型目录为空时会回退到 legacy `portal_model_catalog`；release values 已改为 Console / Portal 走 Kubernetes Ingress，不依赖 port-forward；已重新生成 `out/release/aigateway-1.1.0/` 并升级 `192.168.42.200` 到 Helm revision `3`。
 - [x] 增加正式部署域名配置契约。
   结果：`release-deploy` 支持读取 / 写入 `aigateway-system/aigateway-cluster-domain`，支持 `--base-domain`、`--console-host`、`--portal-host`；新增 `release-k3d-cluster.sh` 用于创建 k3d 时指定域名。
+- [x] 收敛 k3d 标准部署副本数并启用内置监控。
+  结果：release 默认 profile 已改为 `standard`，新建 k3d 默认 `--agents 0`；standard profile 使用单副本 / standalone PostgreSQL 和 Redis，并默认启用 Grafana / Prometheus / Loki / Promtail。`192.168.42.200` 重置后已完成 Helm revision `3` 部署，Console Dashboard 登录态返回 `builtIn: true`。
+- [x] 增加 Ubuntu 24.04 离线 k3d 一键安装脚本。
+  结果：bundle 已包含 `install-k3d-offline.sh`，会安装 runtime、创建单节点 k3d、逐节点导入 k3d/k3s 系统镜像和 release 镜像，并执行 Helm 部署；`192.168.42.200` 重置为干净 Ubuntu 24.04.3 LTS 后已用该脚本完整离线安装并部署成功。
+- [x] 修复 Portal key-auth 投影与 WasmPlugin 绑定口径。
+  结果：Portal key-auth 同步器会在缺失时创建 `key-auth.internal`，但实例级配置固定 `global_auth=false`，只作为 consumers / key 提取配置来源；Console 仍按业务路由写 `matchRules.allow`，不会默认全局拦截 Console / Portal Ingress。
 
 ## P0（2026-04-24 仓库级测试闸门与页面验收）
 

@@ -16,6 +16,16 @@
   - K8s 模型目录为空时，Portal 账单模型 bootstrap 会回退到 legacy `portal_model_catalog`。
 - 修复后已重新生成 `out/release/aigateway-1.1.0/`，同步到 `192.168.42.200`，并将目标机 Helm release 升级到 revision `3`；目标机 Portal Pod 已使用重建后的 `aigateway/portal:1.1.0`。
 - Console / Portal 正式 Ingress 域名契约：标准 K8S 集群从 `aigateway-system/aigateway-cluster-domain` 读取 `baseDomain`，新建 k3d 使用 `release-k3d-cluster.sh --base-domain` 写入，后续修改可重新执行 `release-deploy --base-domain`。
+- 已按组件重新构建 `aigateway/console:1.1.0` 与 `aigateway/portal:1.1.0` 并刷新 release bundle；`192.168.42.200` 已导入两个新镜像并升级到 Helm revision `4`。
+- Pod 数量偏多的原因是实机验收使用了 `ha` profile，并且 k3d 集群创建为 `1 server + 2 agent`；后续默认新建 k3d 改为单节点 `standard` profile，`ha` 仅显式启用。
+- Console Dashboard “监控未启用”的原因是 `global.o11y.enabled=false`，导致内置 Grafana 客户端未启用；后续 `standard` profile 默认启用 o11y，并把 Grafana / Prometheus / Loki / Promtail 镜像纳入离线 bundle。
+- `192.168.42.200` 已切回 `standard` profile 并升级到 Helm revision `5`；当前业务组件、PostgreSQL、Pgpool、Redis 均为单副本 / standalone，登录 Console 后 `/dashboard/info?type=MAIN` 返回 `builtIn: true`。
+- 已新增 `install-k3d-offline.sh` 一键离线安装入口；脚本会安装 runtime、创建单节点 k3d、逐节点导入 k3d/k3s 系统镜像和 release 镜像，再执行 Helm 部署。
+- `2026-04-24` 目标机重置为干净 Ubuntu 24.04.3 LTS 后，已用一键脚本完整离线安装 runtime、创建真正单节点 k3d，并以 Helm revision `3` 完成 `standard` profile 部署；验证 Console / Portal Ingress `200`，Dashboard `builtIn: true`。
+- 不要在 release chart 默认预置全局认证的 `key-auth.internal` WasmPlugin：现场验证发现 Portal key-auth 同步若缺少 `global_auth=false`，会把默认配置按全局认证生效，导致 Console / Portal Ingress 返回 `500`。
+- key-auth 投影修复口径已固定：Portal 负责创建 / 更新 `key-auth.internal` 的实例级 consumers、keys、`global_auth=false`；Console 负责在业务 Route / AI Route 上写 `matchRules.allow`。无业务路由时 key-auth 不拦截 Console / Portal Ingress，也不再持续打印 `key-auth wasmplugin not found`。
+- 干净离线 k3d 的 caveat：仅 `docker load` k3d 系统镜像不够，必须把 `rancher/mirrored-pause:3.6` 等系统镜像导入 k3d 节点 containerd，否则 kubelet 会尝试访问 Docker Hub。
+- 单节点 `standard` profile 需要降低 Gateway / Controller / Pilot 等资源请求，否则 4C/8G 节点会因 CPU / memory requests 不足导致 PostgreSQL、Redis 和 o11y Pod Pending。
 - 本次安装详情已记录在 `docs/release/1.1.0/install-192.168.42.200.md`。
 
 ### 1.1.0 正式发布交付口径
@@ -37,6 +47,16 @@
   - `docs/release/1.1.0/deployment-guide.md`
   - `docs/overview/aigateway-whitepaper-1.1.0.md`
 - `1.1.0` 项目介绍 PPT 交付件固定输出到 `out/docs/1.1.0/aigateway-project-introduction-1.1.0.pptx`。
+
+### Console 模型资产绑定输入约束排查
+
+- 线上 `console.aigateway.io/ai/model-assets` 的“绑定模型资产与 Provider”弹窗里，`modelId / targetModel` 不能手动输入的问题，根因在前端 `ModelBindingDrawer.vue`。
+- 旧实现只要当前 Provider 存在预置模型目录，就把两个字段都渲染成纯 `a-select`，导致用户只能从下拉中选，无法录入特定模型 ID。
+- 后端 `CreateModelBinding / UpdateModelBinding` 仅校验 `modelId / providerName / targetModel` 非空，并未要求它们必须命中 Provider 目录，因此这是前端交互约束过严，不是接口契约限制。
+- 当前已改为“可输入 + 建议列表”模式，并明确拆分两者语义：
+  - `modelId`：建议项来自当前模型资产的 `canonicalName`
+  - `targetModel`：建议项继续来自当前 Provider 的模型目录
+- `targetModel` 命中 Provider 目录时，仍会自动联动目录内的标准目标模型；`modelId` 不再被 Provider 目录误覆盖。
 
 ## 2026-04-23
 

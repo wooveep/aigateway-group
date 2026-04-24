@@ -121,15 +121,18 @@
   - 默认执行：依赖检查 -> sync -> minikube start -> redeploy(local-minikube profile)
   - `--start-tunnel` 时附带执行 `minikube tunnel`
 - `./start.sh release-build`
-  - 生成发布 bundle：chart tgz、镜像 tar、values、`images.lock`、`SHA256SUMS`、`deploy.sh`
+  - 生成发布 bundle：chart tgz、镜像 tar、values、`images.lock`、`SHA256SUMS`、`deploy.sh`、`k3d-cluster.sh`、`install-k3d-offline.sh`
 - `./start.sh release-deploy`
   - 从 bundle 部署到 `k3d` / 通用 `k8s`
   - `--target k3d`：`docker load + k3d image import + helm upgrade`
   - `--target k8s`：`docker load + docker tag/push + helm upgrade`
   - Console / Portal Ingress 域名优先读取 `aigateway-system/aigateway-cluster-domain` 的 `baseDomain`；也可以用 `--base-domain`、`--console-host`、`--portal-host` 覆盖
 - `./start.sh release-k3d-cluster` / `./scripts/release-k3d-cluster.sh`
-  - 新建 k3d 发布验收集群，并用 `--base-domain` 写入集群域名定义
+  - 新建 k3d 发布验收集群，并用 `--base-domain` 写入集群域名定义；默认 `--agents 0`，即单节点 k3d
   - 默认禁用 k3s Traefik，避免与 AIGateway Ingress 入口冲突
+- `out/release/<bundle>/install-k3d-offline.sh`
+  - 面向 Ubuntu 24.04 离线机器的一键 k3d 安装入口
+  - 安装 runtime 包、创建单节点 k3d、逐节点导入 k3d/k3s 系统镜像和 release 镜像，并执行 Helm 部署
 
 ## 发布 bundle
 
@@ -194,6 +197,7 @@ out/release/aigateway-1.1.0/
   --target k3d \
   --bundle-dir out/release/aigateway-1.1.0 \
   --cluster <k3d-cluster> \
+  --profile standard \
   --base-domain example.com \
   --dry-run
 
@@ -273,7 +277,8 @@ aigateway-portal:
 - 本地开发
   - 默认使用共享 `PostgreSQL + Redis`
 - 发布环境
-  - 默认使用 `Redis HA + PostgreSQL HA + pgvector`
+  - 默认 `standard` profile 使用单副本 PostgreSQL、Pgpool 和 standalone Redis
+  - 显式 `ha` profile 使用 `Redis HA + PostgreSQL HA + pgvector`
 
 发布环境共享数据库入口：
 

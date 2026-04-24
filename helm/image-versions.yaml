@@ -35,7 +35,7 @@ release:
   baseValuesFile: higress/helm/higress/values-release-base.yaml
   haValuesFile: higress/helm/higress/values-release-ha.yaml
   upstreamsValuesFile: higress/helm/higress/values-release-upstreams.yaml
-  profile: ha
+  profile: standard
 
 images:
   # Kept in sync with aigateway-console.certmanager.image.* because the

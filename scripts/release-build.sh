@@ -10,6 +10,7 @@ MANIFEST_FILE="${MANIFEST_FILE:-${ROOT_DIR}/helm/image-versions.yaml}"
 BUILD_SCRIPT="${ROOT_DIR}/higress/helm/build-local-images.sh"
 DEPLOY_SCRIPT="${ROOT_DIR}/scripts/release-deploy.sh"
 K3D_CLUSTER_SCRIPT="${ROOT_DIR}/scripts/release-k3d-cluster.sh"
+K3D_OFFLINE_INSTALL_SCRIPT="${ROOT_DIR}/scripts/release-install-k3d-offline.sh"
 
 resolve_repo_path() {
   local candidate="$1"
@@ -171,8 +172,14 @@ extract_rendered_images() {
     awk '
       $1 == "image:" {
         image = $2
+      }
+      $1 == "-" && $2 == "image:" {
+        image = $3
+      }
+      image != "" {
         gsub(/"/, "", image)
         print image
+        image = ""
       }
     ' | awk 'NF { seen[$0] = 1 } END { for (image in seen) print image }' | sort
 }
@@ -316,8 +323,10 @@ else
   run helm package "${CHART_DIR}" --destination "${CHART_OUTPUT_DIR}"
   run cp "${DEPLOY_SCRIPT}" "${BUNDLE_DIR}/deploy.sh"
   run cp "${K3D_CLUSTER_SCRIPT}" "${BUNDLE_DIR}/k3d-cluster.sh"
+  run cp "${K3D_OFFLINE_INSTALL_SCRIPT}" "${BUNDLE_DIR}/install-k3d-offline.sh"
   run chmod +x "${BUNDLE_DIR}/deploy.sh"
   run chmod +x "${BUNDLE_DIR}/k3d-cluster.sh"
+  run chmod +x "${BUNDLE_DIR}/install-k3d-offline.sh"
 fi
 
 dev_stage build "Saving rendered images into bundle."
@@ -334,7 +343,7 @@ done
 if [[ "${DRY_RUN}" != "true" ]]; then
   (
     cd "${BUNDLE_DIR}"
-    run_capture sh -c 'find charts images metadata values -type f ! -path metadata/SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > metadata/SHA256SUMS'
+    run_capture sh -c '{ find charts images metadata values -type f ! -path metadata/SHA256SUMS -print0; printf "%s\0" deploy.sh k3d-cluster.sh install-k3d-offline.sh; } | sort -z | xargs -0 sha256sum > metadata/SHA256SUMS'
   )
 fi
 

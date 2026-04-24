@@ -6,7 +6,7 @@ CLUSTER=""
 NAMESPACE="aigateway-system"
 BASE_DOMAIN=""
 SERVERS="1"
-AGENTS="2"
+AGENTS="0"
 HTTP_PORT="80"
 HTTPS_PORT="443"
 SKIP_CREATE=false
@@ -22,7 +22,7 @@ Options:
   --base-domain <domain>  Console/Portal base domain. Hosts become console.<domain>/portal.<domain>.
   --namespace <name>      Namespace used to store the cluster domain config. Default: aigateway-system.
   --servers <n>           k3d server count. Default: 1.
-  --agents <n>            k3d agent count. Default: 2.
+  --agents <n>            k3d agent count. Default: 0.
   --http-port <port>      Host HTTP port mapped to k3d loadbalancer. Default: 80.
   --https-port <port>     Host HTTPS port mapped to k3d loadbalancer. Default: 443.
   --skip-create           Do not create the cluster; only write the domain config.

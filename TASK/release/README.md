@@ -53,6 +53,10 @@
 
 - 已在 `192.168.42.200` 的干净 Ubuntu 24.04.3 LTS 环境完成 `1.1.0` k3d 实机部署验收；过程记录见 `docs/release/1.1.0/install-192.168.42.200.md`。
 - 已补齐正式部署域名配置契约：标准 K8S 读取 `aigateway-system/aigateway-cluster-domain`，新建 k3d 通过 `./start.sh release-k3d-cluster --base-domain <domain>` 写入，后续通过 `./start.sh release-deploy --base-domain <domain>` 修改 Console / Portal Ingress 域名。
+- 已将 release 默认 profile 调整为 `standard`，用于单节点 / 资源受限 k3d；`ha` profile 仅在显式指定时启用多副本、PostgreSQL 3 实例和 Redis replication。
+- 已将 `standard` profile 默认启用内置监控，离线 bundle 已包含 Grafana / Prometheus / Loki / Promtail；`192.168.42.200` 已升级到 Helm revision `5` 并验证 Console Dashboard 返回 `builtIn: true`。
+- 已新增 Ubuntu 24.04 离线 k3d 一键安装入口 `install-k3d-offline.sh`，并在重置后的 `192.168.42.200` 干净 Ubuntu 24.04.3 LTS 上完成 runtime 离线安装、单节点 k3d 创建和 Helm revision `3` 部署验收。
+- key-auth 投影已修复为非全局认证口径：Portal 创建 / 更新 `key-auth.internal` 时写入 `global_auth=false` 和 consumers，Console 仅在业务路由上写 `matchRules.allow`，避免新环境无 AI 路由时持续报 `key-auth wasmplugin not found` 或全局拦截 Console / Portal Ingress。
 - 本次实机部署补充了无互联网场景必须携带的运行时镜像集合，并记录 `k3d image import` 在 Docker 29 下需要回退到逐节点 `ctr images import` 的 caveat。
 - 根级 `TASK/release/` 已收口为发布与部署改造的唯一任务台账。
 - 已确定阶段顺序为 `P0 -> P1 -> P2 -> P3 -> P4 -> P5/P6 -> P7`。

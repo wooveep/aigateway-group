@@ -39,7 +39,7 @@
 - 已启动 `1.1.0` 正式发布交付：`helm/image-versions.yaml`、父 Chart、Console / Portal 子 Chart 和 release values 已切到 `1.1.0`，默认 bundle 名称为 `aigateway-1.1.0`。
 - 已新增 `docs/release/1.1.0/` 发布说明、镜像包说明、部署说明，以及 `docs/overview/aigateway-whitepaper-1.1.0.md` 项目介绍白皮书。
 - 已调整 `scripts/export-formal-docs.py` 支持按 `--version` 导出当前版本正式文档，默认输出为 `out/docs/1.1.0/`。
-- 已生成 `1.1.0` release bundle：`out/release/aigateway-1.1.0/`，包含 11 个镜像 tar、`higress-1.1.0.tgz`、`images.lock`、`SHA256SUMS` 和 `deploy.sh`；已修复 `release-build` 生成 `SHA256SUMS` 时包含自身的问题。
+- 已生成 `1.1.0` release bundle：`out/release/aigateway-1.1.0/`，当前 standard profile bundle 包含 13 个镜像 tar、`higress-1.1.0.tgz`、`images.lock`、`SHA256SUMS` 和 `deploy.sh`；已修复 `release-build` 生成 `SHA256SUMS` 时包含自身的问题。
 - 已生成 `1.1.0` 正式文档导出件与项目介绍 PPT：`out/docs/1.1.0/`，其中 PPT 为 `aigateway-project-introduction-1.1.0.pptx`，封面资产来自 `imagegen`。
 - 已新增仓库级测试闸门入口 `./start.sh test --stage <unit|integration|e2e|acceptance|release|all>`，统一编排 Portal/Console 后端、关键 Higress runtime 插件、Portal/Console 前端黑盒、Chrome DevTools 验收以及 release dry-run。
 - 已将 Go 集成测试切到 `integration` build tag：Portal/Console 的 PostgreSQL/Testcontainers 用例不再混入默认 `go test ./...`，避免发布前的 unit gate 与 integration gate 混在一起。
@@ -151,3 +151,8 @@
 - 已从目标机验证 `curl -H 'Host: console.aigateway.io' http://127.0.0.1/` 与 `curl -H 'Host: portal.aigateway.io' http://127.0.0.1/` 均返回 `200 OK`；临时排障用 port-forward systemd 服务已停用并删除。
 - 已在修复 Portal 干净库首启问题后重新执行 `./start.sh release-build`，同步新 bundle 到 `192.168.42.200`，导入修复后的 Portal 镜像，并将目标机 Helm release 升级到 revision `3`；Console / Portal Ingress 从本机连续访问均为 `200`。
 - 已为 release 部署脚本增加 Console / Portal Ingress 域名契约：标准 K8S 读取 `aigateway-system/aigateway-cluster-domain`，新建 k3d 可用 `k3d-cluster.sh --base-domain` 写入，后续可用 `release-deploy --base-domain` 修改并触发 Helm upgrade。
+- 已按组件重新构建并发布 `aigateway/console:1.1.0` 与 `aigateway/portal:1.1.0`，刷新 `out/release/aigateway-1.1.0/`，同步到 `192.168.42.200`，目标机 Helm release 升级到 revision `4`，Console / Portal Ingress 连续访问均为 `200`。
+- 已定位新环境 Pod 数量偏多原因：目标机 k3d 实际为 `1 server + 2 agent`，且部署使用 `ha` profile；已将 release 默认 profile 调整为 `standard`，k3d 创建脚本默认 `--agents 0`，`ha` profile 改为显式 opt-in。
+- 已修复 Console Dashboard “监控未启用”：release standard profile 默认启用 `global.o11y.enabled=true`，bundle 已补齐 Grafana / Prometheus / Loki / Promtail 离线镜像，目标机升级到 Helm revision `5` 后 `/dashboard/info?type=MAIN` 登录态返回 `builtIn: true`。
+- 已新增并验证 Ubuntu 24.04 离线 k3d 一键安装脚本 `install-k3d-offline.sh`；`192.168.42.200` 重置为干净 Ubuntu 24.04.3 LTS 后已通过该脚本完整离线安装 runtime、创建单节点 k3d、导入 runtime 与 release 镜像，当前 Helm revision `3`，Console / Portal Ingress 均返回 `200`，Console Dashboard 返回 `builtIn: true`。
+- 已修复 Portal key-auth 投影：Portal 首次同步会创建非全局认证的 `key-auth.internal`，`defaultConfig.global_auth=false`，后续只由 Console 在业务 Route / AI Route 上通过 `matchRules.allow` 启用鉴权，避免新环境持续打印 `key-auth wasmplugin not found` 且不拦截 Console / Portal Ingress。

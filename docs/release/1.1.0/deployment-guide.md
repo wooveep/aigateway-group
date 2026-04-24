@@ -24,7 +24,34 @@
 
 ## 4. K3D 部署
 
-`k3d` 是首选正式验收环境。
+`k3d` 是首选正式验收环境。新建 k3d 默认按单节点标准部署，不启用 HA profile。
+
+### 4.1 离线一键安装
+
+无互联网环境优先使用 bundle 中的 `install-k3d-offline.sh`。把 release bundle 和运行时离线包放到目标机后执行：
+
+```bash
+cd /opt/aigateway-install/1.1.0/bundle/aigateway-1.1.0
+./install-k3d-offline.sh \
+  --runtime-package /opt/aigateway-install/1.1.0/offline-packages/aigateway-runtime-with-k3d-images-ubuntu24.04-amd64-20260424.tar.gz \
+  --install-root /opt/aigateway-install/1.1.0 \
+  --cluster aigateway-110 \
+  --base-domain aigateway.io \
+  --profile standard
+```
+
+该脚本会完成：
+
+- 安装 Docker / k3d / kubectl / Helm
+- 加载 k3d / k3s 系统镜像并逐节点导入 k3d containerd
+- 创建单节点 k3d 集群，默认禁用 k3s Traefik
+- 校验 bundle `metadata/SHA256SUMS`
+- 加载并逐节点导入 release 镜像
+- 执行 Helm 部署
+
+如需重建已有测试集群，增加 `--recreate-cluster`。
+
+### 4.2 在线 / 已安装运行时部署
 
 新建验收集群时先指定本次部署域名。脚本会禁用 k3s 默认 Traefik，并在集群内写入 `aigateway-system/aigateway-cluster-domain`：
 
@@ -41,6 +68,7 @@ Dry-run：
   --target k3d \
   --bundle-dir out/release/aigateway-1.1.0 \
   --cluster <k3d-cluster> \
+  --profile standard \
   --base-domain example.com \
   --dry-run
 ```
@@ -52,6 +80,7 @@ Dry-run：
   --target k3d \
   --bundle-dir out/release/aigateway-1.1.0 \
   --cluster <k3d-cluster> \
+  --profile standard \
   --base-domain example.com
 ```
 
@@ -118,6 +147,20 @@ helm template aigateway ./helm/higress \
   --cluster <k3d-cluster> \
   --base-domain example.com
 ```
+
+`standard` profile 适合单节点 / 资源受限环境：
+
+- Console / Portal / Controller / Gateway / Plugin Server 均为 1 副本
+- PostgreSQL 为 1 个实例，pgpool 为 1 副本
+- Redis 为 standalone
+- 内置监控默认启用，会额外部署 Grafana / Prometheus / Loki / Promtail
+
+`ha` profile 适合多节点集群：
+
+- Gateway 3 副本
+- Controller / Console / Portal / Plugin Server 2 副本
+- PostgreSQL 3 实例，pgpool 2 副本
+- Redis replication + sentinel
 
 后续修改 Console / Portal 域名时，重新执行部署脚本即可；脚本会更新集群域名定义并做 Helm upgrade：
 

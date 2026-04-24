@@ -7,6 +7,7 @@ TARGET=""
 RELEASE_NAME="aigateway"
 NAMESPACE="aigateway-system"
 PROFILE="ha"
+USER_PROVIDED_PROFILE=false
 REGISTRY=""
 IMAGE_PULL_SECRET=""
 REPLICAS=""
@@ -243,6 +244,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --profile)
       PROFILE="$2"
+      USER_PROVIDED_PROFILE=true
       shift 2
       ;;
     --registry)
@@ -307,6 +309,13 @@ done
 [[ -n "${TARGET}" ]] || die "--target is required"
 [[ -d "${BUNDLE_DIR}" ]] || die "Bundle directory not found: ${BUNDLE_DIR}"
 [[ -f "${BUNDLE_DIR}/metadata/images.lock" ]] || die "Missing images.lock in bundle."
+
+if [[ "${USER_PROVIDED_PROFILE}" != "true" && -f "${BUNDLE_DIR}/metadata/release.env" ]]; then
+  BUNDLE_PROFILE="$(grep -E '^PROFILE=' "${BUNDLE_DIR}/metadata/release.env" | tail -n 1 | cut -d= -f2- || true)"
+  if [[ -n "${BUNDLE_PROFILE}" ]]; then
+    PROFILE="${BUNDLE_PROFILE}"
+  fi
+fi
 
 need_cmd docker
 need_cmd helm
