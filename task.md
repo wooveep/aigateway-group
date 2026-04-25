@@ -3,7 +3,7 @@
 > 文档职责：本文件只记录“当前进行中、阻塞项、最近更新、最近验证”。  
 > 稳定边界看 `Project.md`，执行清单看 `TODO.md`，发布 / 部署台账看 `TASK/README.md`。
 
-更新时间：2026-04-24
+更新时间：2026-04-25
 
 ## 当前阶段
 
@@ -34,6 +34,13 @@
 
 ## 今日更新
 
+- 已针对线上 `console.aigateway.io/consumer` 的 `Portal database is unavailable` 首启窗口做稳定性加固：Console `portaldb` 健康检查不再把启动期 PostgreSQL 失败永久缓存为 `portalHealthy=false`；Portal `main` 改为在进程内循环等待数据库与 bootstrap 就绪，不再因 PostgreSQL 稍晚启动而直接退出 Pod。
+- 已补 release standard profile 的 Portal Prometheus 注入：`aigateway-portal.backend.corePrometheusURL` 固定指向 `http://aigateway-console-prometheus:9090/prometheus`，避免新环境 AI 监控面板因未注入指标源而无用量统计。
+- 已补 release profile 的 `global.onlyPushRouteCluster=false`：默认 release 数据面现在会下发普通 Kubernetes Service cluster，避免 `ai-quota` / `ai-token-ratelimit` / `cluster-key-rate-limit` 访问 `redis-server-master.<namespace>.svc.cluster.local` 时因未推送 cluster 报 `error status returned by host: bad argument`。
+- 已为 Console / Portal Deployment 增加 `wait-for-portal-db` initContainer，使用 `pg_isready` 先等待 PostgreSQL，再启动应用容器，降低 release 首启阶段命中共享库未就绪窗口的概率。
+- 已补 Portal Redis 账单 runtime 的自愈能力：`billing` consumer loop 改为断线后持续重连，并在定时同步时重新发现 `ai-quota` amount bindings；Redis 或 K8s runtime 配置在启动窗口稍晚就绪时，不再因为首轮失败而永久丢失消费链路。
+- 已执行 `cd aigateway-console/backend && go test ./utility/clients/portaldb ./internal/service/portal ./internal/service/jobs ./internal/service/platform ./internal/cmd/...`、`cd aigateway-portal/backend && go test ./internal/cmd/...`，并重新执行 release values `helm template`，渲染结果当前为 `4591` 行。
+- 已为新环境发布链路补充显式数据库初始化阶段：`release-deploy` 在 Helm `--wait` 后会依次执行 Portal `db-init` 与 Console `portaldb-init`，不再依赖首个业务请求触发补表。
 - 已在 `192.168.42.200` 干净 Ubuntu 24.04.3 LTS 环境完成 `1.1.0` k3d 实机部署；正式访问口径已切为 Kubernetes Ingress：`console.aigateway.io`、`portal.aigateway.io`。
 - 已在目标机输出运行时离线包与安装日志：`/opt/aigateway-install/1.1.0/offline-packages/`、`/opt/aigateway-install/1.1.0/logs/`；过程文档已写入 `docs/release/1.1.0/install-192.168.42.200.md`。
 - 已启动 `1.1.0` 正式发布交付：`helm/image-versions.yaml`、父 Chart、Console / Portal 子 Chart 和 release values 已切到 `1.1.0`，默认 bundle 名称为 `aigateway-1.1.0`。
@@ -154,5 +161,6 @@
 - 已按组件重新构建并发布 `aigateway/console:1.1.0` 与 `aigateway/portal:1.1.0`，刷新 `out/release/aigateway-1.1.0/`，同步到 `192.168.42.200`，目标机 Helm release 升级到 revision `4`，Console / Portal Ingress 连续访问均为 `200`。
 - 已定位新环境 Pod 数量偏多原因：目标机 k3d 实际为 `1 server + 2 agent`，且部署使用 `ha` profile；已将 release 默认 profile 调整为 `standard`，k3d 创建脚本默认 `--agents 0`，`ha` profile 改为显式 opt-in。
 - 已修复 Console Dashboard “监控未启用”：release standard profile 默认启用 `global.o11y.enabled=true`，bundle 已补齐 Grafana / Prometheus / Loki / Promtail 离线镜像，目标机升级到 Helm revision `5` 后 `/dashboard/info?type=MAIN` 登录态返回 `builtIn: true`。
-- 已新增并验证 Ubuntu 24.04 离线 k3d 一键安装脚本 `install-k3d-offline.sh`；`192.168.42.200` 重置为干净 Ubuntu 24.04.3 LTS 后已通过该脚本完整离线安装 runtime、创建单节点 k3d、导入 runtime 与 release 镜像，当前 Helm revision `3`，Console / Portal Ingress 均返回 `200`，Console Dashboard 返回 `builtIn: true`。
+- 已新增并验证 Ubuntu 24.04 离线 k3d 一键安装脚本 `install-k3d-offline.sh`；`192.168.42.200` 再次重置为干净 Ubuntu 24.04.3 LTS 后已通过该脚本完整离线安装 runtime、创建单节点 k3d、导入 runtime 与 release 镜像，当前 Helm revision `1`，Console / Portal Ingress 均返回 `200`，Console Dashboard 返回 `builtIn: true`，部署阶段已显式执行 Portal `db-init` 与 Console `portaldb-init`。
+- 已修复 release standard profile 的 Redis standalone 地址：`higress-config` 现在指向 `redis-server-master.aigateway-system.svc.cluster.local:6379`，并将 ConfigMap 模板合并策略改为新 release values 覆盖旧集群值，避免升级后继续保留旧 `redis-server` 地址。
 - 已修复 Portal key-auth 投影：Portal 首次同步会创建非全局认证的 `key-auth.internal`，`defaultConfig.global_auth=false`，后续只由 Console 在业务 Route / AI Route 上通过 `matchRules.allow` 启用鉴权，避免新环境持续打印 `key-auth wasmplugin not found` 且不拦截 Console / Portal Ingress。

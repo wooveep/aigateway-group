@@ -134,6 +134,15 @@ helm template aigateway ./helm/higress \
   - 使用 `docker load + k3d image import + helm upgrade --install`
 - 通用 `k8s`
   - 使用 `docker load + retag/push + helm upgrade --install`
+- Helm `--wait` 完成后，脚本会继续在集群内显式执行数据库初始化：
+  - `kubectl exec deploy/aigateway-portal -- /app/aigateway-portal db-init`
+  - `kubectl exec deploy/aigateway-console -- /app/aigateway-console portaldb-init`
+  - 该阶段只负责共享表、Portal 自有表、Console 自有表的全量初始化
+  - legacy 数据迁移不属于新环境部署阶段；如需升级旧库，使用单独命令 `portal-legacy-migrate`
+- Console / Portal Pod 还会在容器级和应用级两层等待共享库：
+  - Deployment 增加 `wait-for-portal-db` initContainer，先用 `pg_isready` 等待 PostgreSQL ready
+  - Portal 业务进程在数据库 / bootstrap 未就绪时会在容器内持续重试，不再直接退出 Pod
+  - Console `portaldb` 健康检查在数据库恢复后会重新探测并清理启动期旧错误，不再把 `portalHealthy=false` 永久锁死
 - 真实部署镜像集合以 bundle 中的 `metadata/images.lock` 为准
 - Console / Portal 正式访问通过 Kubernetes Ingress 暴露，不使用 port-forward
   - 标准 K8S：默认读取 `aigateway-system/aigateway-cluster-domain` 中的 `baseDomain`
@@ -154,6 +163,8 @@ helm template aigateway ./helm/higress \
 - PostgreSQL 为 1 个实例，pgpool 为 1 副本
 - Redis 为 standalone
 - 内置监控默认启用，会额外部署 Grafana / Prometheus / Loki / Promtail
+- Portal 会显式注入 `corePrometheusURL=http://aigateway-console-prometheus:9090/prometheus`，供 AI 监控面板与用量统计读取指标
+- `global.onlyPushRouteCluster=false`，保证 `ai-quota` / `ai-token-ratelimit` / `cluster-key-rate-limit` 可直接访问 `redis-server-master.<namespace>.svc.cluster.local`
 
 `ha` profile 适合多节点集群：
 
@@ -172,6 +183,12 @@ helm template aigateway ./helm/higress \
   --skip-import \
   --skip-push \
   --base-domain new.example.com
+```
+
+若只想跳过数据库初始化阶段，可显式增加：
+
+```bash
+--skip-db-init
 ```
 
 ## 8. 已知边界

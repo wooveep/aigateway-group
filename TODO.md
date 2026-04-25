@@ -19,11 +19,23 @@
 - [x] 增加正式部署域名配置契约。
   结果：`release-deploy` 支持读取 / 写入 `aigateway-system/aigateway-cluster-domain`，支持 `--base-domain`、`--console-host`、`--portal-host`；新增 `release-k3d-cluster.sh` 用于创建 k3d 时指定域名。
 - [x] 收敛 k3d 标准部署副本数并启用内置监控。
-  结果：release 默认 profile 已改为 `standard`，新建 k3d 默认 `--agents 0`；standard profile 使用单副本 / standalone PostgreSQL 和 Redis，并默认启用 Grafana / Prometheus / Loki / Promtail。`192.168.42.200` 重置后已完成 Helm revision `3` 部署，Console Dashboard 登录态返回 `builtIn: true`。
+  结果：release 默认 profile 已改为 `standard`，新建 k3d 默认 `--agents 0`；standard profile 使用单副本 / standalone PostgreSQL 和 Redis，并默认启用 Grafana / Prometheus / Loki / Promtail。`192.168.42.200` 再次重置后已完成 Helm revision `1` 部署，Console Dashboard 登录态返回 `builtIn: true`。
+- [x] 为 release standard profile 显式注入 Portal Prometheus 地址。
+  结果：`higress/helm/higress/values-release-base.yaml` 已固定 `aigateway-portal.backend.corePrometheusURL=http://aigateway-console-prometheus:9090/prometheus`，避免新环境 AI 监控面板 / 用量统计因空地址静默无数据。
+- [x] 为 release profile 打开普通 Kubernetes Service cluster 下发。
+  结果：`higress/helm/higress/values-release-base.yaml` 已固定 `global.onlyPushRouteCluster=false`；release 数据面会为 `redis-server-master.<namespace>.svc.cluster.local` 这类 Service 下发 outbound cluster，避免 `ai-quota` / `ai-token-ratelimit` / `cluster-key-rate-limit` 初始化 Redis 时持续报 `bad argument`。
 - [x] 增加 Ubuntu 24.04 离线 k3d 一键安装脚本。
   结果：bundle 已包含 `install-k3d-offline.sh`，会安装 runtime、创建单节点 k3d、逐节点导入 k3d/k3s 系统镜像和 release 镜像，并执行 Helm 部署；`192.168.42.200` 重置为干净 Ubuntu 24.04.3 LTS 后已用该脚本完整离线安装并部署成功。
 - [x] 修复 Portal key-auth 投影与 WasmPlugin 绑定口径。
   结果：Portal key-auth 同步器会在缺失时创建 `key-auth.internal`，但实例级配置固定 `global_auth=false`，只作为 consumers / key 提取配置来源；Console 仍按业务路由写 `matchRules.allow`，不会默认全局拦截 Console / Portal Ingress。
+- [x] 修复 release standard profile 的 Redis standalone 地址与升级覆盖。
+  结果：`higress-core.redis.serviceNameOverride=redis-server-master`，`higress-config` 渲染 `mcpServer.redis.address=redis-server-master.aigateway-system.svc.cluster.local:6379`；ConfigMap 模板从普通 `merge` 调整为 `mergeOverwrite`，升级时新 release values 可覆盖旧集群配置，目标机重置后 revision `1` 已验证 Gateway 不再持续打印 Redis `no such host`。
+- [x] 为新环境补齐显式数据库 INIT 过程。
+  结果：Portal 新增 `db-init`，Console 新增 `portaldb-init`；`./start.sh release-deploy` 在 Helm `--wait` 后会自动执行两段初始化，确保共享表、Portal 自有表和 Console 自有表在首个业务请求前完成。历史库迁移继续保留为单独的 `portal-legacy-migrate`。
+- [x] 加固 Console / Portal 在 PostgreSQL 首启窗口的恢复能力。
+  结果：Console `portaldb` 健康检查会在数据库恢复后重新 `Ping + EnsureSchema`，不再把启动期错误永久缓存为 `portalHealthy=false`；Portal `main` 改为在进程内循环等待数据库初始化成功；Console / Portal Helm Deployment 同时新增 `wait-for-portal-db` initContainer，先等待 PostgreSQL ready 再启动业务容器。
+- [x] 加固 Portal 对 Redis runtime 的重连与重新发现能力。
+  结果：Portal `billing` consumer loop 改为掉线后持续重连，不再因启动当下 Redis 不可用直接退出；同时会在定时同步阶段重新发现 `ai-quota` amount bindings，避免 Redis / K8s runtime 配置稍晚就绪时永久缺失账单消费链路。
 
 ## P0（2026-04-24 仓库级测试闸门与页面验收）
 

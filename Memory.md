@@ -1,9 +1,24 @@
 # AIGateway Group - 协作记忆
 
+## 2026-04-25
+
+### Console / Portal 首启数据库窗口修复
+
+- 线上 `console.aigateway.io/consumer` 出现 `Portal database is unavailable`，且删除 `aigateway-console` Pod 后恢复，根因不是 `/consumer` 页面本身，而是 Console `portaldb` client 在启动期第一次 `EnsureSchema` 失败后把错误长期缓存到 `Healthy()`，后续 PostgreSQL 恢复也继续对外报告 `portalHealthy=false`。
+- Portal 首启还有第二个问题：`main` 在 `service.New()` 阶段若 PostgreSQL / schema 未就绪会直接返回错误退出，导致 Pod 只能靠 Kubernetes 重启重试。
+- Redis 侧的 caveat 也已固定：Portal 主进程本身不应把 Redis 作为启动硬依赖，但 `billing` usage consumer 若在启动时第一次连 Redis 失败，旧实现会直接退出 goroutine，后续即使 Redis 恢复也不会自行拉起。
+- 当前仓库口径已固定：
+  - Console `portaldb` 健康检查必须按“实时 `Ping` + 启动失败后重新 `EnsureSchema`”判断，恢复后清掉旧错误。
+  - Portal `main` 必须在进程内重试等待数据库与 bootstrap 就绪，不把“数据库稍晚启动”直接升级成 Pod 重启。
+  - Console / Portal Deployment 必须先跑 `wait-for-portal-db` initContainer，用 `pg_isready` 等待 PostgreSQL ready，再进入业务容器。
+  - Portal `billing` Redis consumer 必须在连接断开、`NOGROUP` 或首轮连接失败后持续重连，并周期性重新发现 `ai-quota` amount bindings，不能依赖删 Pod 才恢复。
+
 ## 2026-04-24
 
 ### 1.1.0 在 192.168.42.200 的 k3d 部署记录
 
+- 新环境数据库初始化口径已固定：`release-deploy` 在 Helm 就绪后必须显式执行 Portal `db-init` 与 Console `portaldb-init`，不再把共享库建表 / Console 自有表补齐隐式寄托在业务启动或页面首次访问上。
+- legacy 数据迁移不属于新环境 INIT；旧库升级时继续通过单独的 Console 命令 `portal-legacy-migrate` 显式执行。
 - 已在 `192.168.42.200` 的 Ubuntu 24.04.3 LTS 上完成 `1.1.0` k3d 部署，安装目录为 `/opt/aigateway-install/1.1.0/`。
 - 正式部署访问口径使用 Kubernetes Ingress，不保留 Console / Portal port-forward systemd 服务；`192.168.42.200` 上临时排障用 port-forward 服务已删除。
 - 目标机保留了运行时离线包：
@@ -27,6 +42,7 @@
 - 干净离线 k3d 的 caveat：仅 `docker load` k3d 系统镜像不够，必须把 `rancher/mirrored-pause:3.6` 等系统镜像导入 k3d 节点 containerd，否则 kubelet 会尝试访问 Docker Hub。
 - 单节点 `standard` profile 需要降低 Gateway / Controller / Pilot 等资源请求，否则 4C/8G 节点会因 CPU / memory requests 不足导致 PostgreSQL、Redis 和 o11y Pod Pending。
 - 本次安装详情已记录在 `docs/release/1.1.0/install-192.168.42.200.md`。
+- `2026-04-24 15:32` 目标机再次重置后，使用同一离线包完成最新一次干净安装：安装日志 `install-k3d-offline-20260424153204.log`，Helm revision `1`，`release-deploy` 已显式执行 Portal `db-init` 与 Console `portaldb-init`；验证 `billing_model_catalog=3`、`billing_model_price_version=3`，Console / Portal Ingress `200`，Dashboard 原生指标正常。
 
 ### 1.1.0 正式发布交付口径
 
@@ -768,3 +784,23 @@
 - `go test ./...`：`higress/plugins/wasm-go/extensions/ai-token-ratelimit` 通过。
 - `npm run build`：`aigateway-console/frontend` 通过。
 - `npm ci && npm run build`：`aigateway-portal/frontend` 通过。
+
+## 2026-04-24：1.1.0 离线 k3d 实机部署收口
+
+### 本次事实
+
+- `192.168.42.200` 已在再次重置后的干净 Ubuntu 24.04.3 LTS 上通过 `install-k3d-offline.sh` 完成离线部署；最新安装日志为 `install-k3d-offline-20260424153204.log`。
+- 目标机安装目录固定为 `/opt/aigateway-install/1.1.0/`，release bundle 为 `/opt/aigateway-install/1.1.0/bundle/aigateway-1.1.0/`。
+- 当前 k3d 集群为 `aigateway-110`，单节点 `1 server + 0 agent`。
+- 当前 Helm release 为 `aigateway/aigateway-system`，revision `1`，`standard` profile。
+- Console / Portal 正式访问走 Ingress：`console.aigateway.io`、`portal.aigateway.io`。
+- Console 登录 `admin/admin` 后 `/dashboard/info?type=MAIN` 返回 `builtIn: true`，`/dashboard/native?type=MAIN` 返回原生指标数据。
+
+### 修复记录
+
+- `standard` profile 下 Redis 为 standalone，实际服务名是 `redis-server-master`，不是 `redis-server`。
+- `higress-core.redis.serviceNameOverride` 固定为 `redis-server-master`，`higress-config` 渲染地址为 `redis-server-master.aigateway-system.svc.cluster.local:6379`。
+- `standard` profile 同时必须显式注入 Portal 指标源：`aigateway-portal.backend.corePrometheusURL=http://aigateway-console-prometheus:9090/prometheus`；否则 Portal AI 监控面板不会有用量统计，即使 Prometheus Pod 已部署成功。
+- release profile 还必须关闭 `global.onlyPushRouteCluster` 默认裁剪：保持 `global.onlyPushRouteCluster=false`，否则数据面不会自动拿到普通 Kubernetes Service 的 cluster，`ai-quota` / `ai-token-ratelimit` / `cluster-key-rate-limit` 即使指向存在的 `redis-server-master.<namespace>.svc.cluster.local` 也会在 Redis init 阶段报 `error status returned by host: bad argument`。
+- `higress-config` 模板原先使用普通 `merge` 合并已有 ConfigMap，升级时旧 `mcpServer.redis.address` 会覆盖新 values；已改为 `mergeOverwrite`，让 release values 生成的新配置覆盖旧集群字段，同时保留其他未被新 values 管理的已有配置。
+- 本次重置后 revision `1` 已验证 `higress-config` 指向 `redis-server-master.aigateway-system.svc.cluster.local:6379`，Gateway 日志复查窗口内未再出现 Redis `no such host` / reconnect 错误；Portal `db-init` 与 Console `portaldb-init` 已在部署阶段执行，关键表和账单种子数据已确认。

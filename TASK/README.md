@@ -53,3 +53,7 @@
 - 发布与部署：见 `TASK/release/`
 - Console GoFrame 重写 / Java parity / provider 协议专项：见 `TASK/projects/aigateway-console/`
 - Portal / Higress / Plugin Server 当前先以项目根目录轻量文档为主，根目录 `TASK/projects/` 负责统一入口索引
+- 新环境数据库初始化以 release 主线文档为准：`release-deploy` 现已包含显式 Portal/Console DB init 阶段
+- release 首启稳定性以 release 主线文档为准：Console / Portal Pod 当前会先等待 PostgreSQL ready，再由应用内部重试 schema/bootstrap，不再依赖删 Pod 恢复
+- release 监控与用量统计口径以 release 主线文档为准：`standard` profile 必须显式给 Portal 注入 `corePrometheusURL`
+- release Redis / quota 运行态口径以 release 主线文档为准：`global.onlyPushRouteCluster` 必须为 `false`

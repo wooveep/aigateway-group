@@ -15,6 +15,7 @@ DRY_RUN=false
 SKIP_IMPORT=false
 SKIP_PUSH=false
 SKIP_DEPLOY=false
+SKIP_DB_INIT=false
 K3D_CLUSTER=""
 INGRESS_BASE_DOMAIN=""
 USER_PROVIDED_BASE_DOMAIN=false
@@ -45,6 +46,7 @@ Options:
   --skip-import                 Skip docker load / k3d import.
   --skip-push                   Skip docker push when target=k8s.
   --skip-deploy                 Skip helm upgrade.
+  --skip-db-init                Skip in-cluster database initialization after helm deploy.
   --set key=value               Additional Helm set values.
   --dry-run                     Print actions only.
   -h, --help                    Show help.
@@ -55,6 +57,28 @@ run() {
   echo "+ $*"
   if [[ "${DRY_RUN}" != "true" ]]; then
     "$@"
+  fi
+}
+
+deployment_exists() {
+  kubectl -n "${NAMESPACE}" get deployment "$1" >/dev/null 2>&1
+}
+
+run_db_init() {
+  if [[ "${SKIP_DB_INIT}" == "true" || "${SKIP_DEPLOY}" == "true" ]]; then
+    return 0
+  fi
+
+  if deployment_exists "aigateway-portal"; then
+    run kubectl -n "${NAMESPACE}" exec deploy/aigateway-portal -- /app/aigateway-portal db-init
+  else
+    echo "[WARN] Skip portal db init: deployment/aigateway-portal not found" >&2
+  fi
+
+  if deployment_exists "aigateway-console"; then
+    run kubectl -n "${NAMESPACE}" exec deploy/aigateway-console -- /app/aigateway-console portaldb-init
+  else
+    echo "[WARN] Skip console portaldb init: deployment/aigateway-console not found" >&2
   fi
 }
 
@@ -288,6 +312,10 @@ while [[ $# -gt 0 ]]; do
       SKIP_DEPLOY=true
       shift
       ;;
+    --skip-db-init)
+      SKIP_DB_INIT=true
+      shift
+      ;;
     --set)
       EXTRA_SET_ARGS+=(--set "$2")
       shift 2
@@ -374,6 +402,8 @@ if [[ "${SKIP_DEPLOY}" != "true" ]]; then
     --wait \
     --timeout "${HELM_TIMEOUT}"
 fi
+
+run_db_init
 
 echo "Release deploy finished."
 echo "  target    : ${TARGET}"

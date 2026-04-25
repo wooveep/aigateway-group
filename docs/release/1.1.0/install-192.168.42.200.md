@@ -10,7 +10,7 @@
 
 - k3d 集群：`aigateway-110`
 - k3d 节点：`1 server + 0 agent`
-- Helm release：`aigateway`，当前 revision `3`
+- Helm release：`aigateway`，当前 revision `1`
 - 当前 Helm profile：`standard`
 - Namespace：`aigateway-system`
 - Console Ingress：`console.aigateway.io`
@@ -21,7 +21,7 @@
 - 运行时离线包：
   - `/opt/aigateway-install/1.1.0/offline-packages/aigateway-runtime-with-k3d-images-ubuntu24.04-amd64-20260424.tar.gz`
 - 过程日志：`/opt/aigateway-install/1.1.0/logs/`
-  - 最新一键安装日志：`/opt/aigateway-install/1.1.0/logs/install-k3d-offline-20260424133028.log`
+  - 最新一键安装日志：`/opt/aigateway-install/1.1.0/logs/install-k3d-offline-20260424153204.log`
 
 ## 已安装运行时
 
@@ -64,6 +64,8 @@ cd /opt/aigateway-install/1.1.0/bundle/aigateway-1.1.0
 - k3d 节点 containerd 需要逐节点导入 `rancher/mirrored-pause:3.6` 等 k3d/k3s 系统镜像，否则 kubelet 会尝试访问 Docker Hub。
 - 单节点 `standard` profile 需要降低 Gateway / Controller / Pilot 等默认资源请求，否则 4C/8G 单节点会因 CPU / memory requests 不足导致 PostgreSQL、Redis 和 o11y Pod Pending。
 - 验证过程中曾尝试预置全局认证口径的 `key-auth.internal` WasmPlugin，但 Portal 同步会把 key-auth 默认配置打开到全局，导致 Console / Portal 入口返回 `500`。修复口径已调整为：Portal 可创建 `key-auth.internal`，但实例级配置必须写 `global_auth=false`，只保存 consumers / key 提取规则；业务鉴权只由 Console 在具体 Route / AI Route 上写 `matchRules.allow`。
+- `standard` profile 下 Redis 为 standalone，Bitnami service 实际为 `redis-server-master`；`higress-config` 中 `mcpServer.redis.address` 必须指向 `redis-server-master.aigateway-system.svc.cluster.local:6379`。同时修复 Helm 模板中已有 `higress-config` 的合并策略，确保升级时新 values 能覆盖旧地址。
+- 新环境数据库初始化必须在 Helm 就绪后显式执行：Portal `db-init` 负责共享库 / Portal 账单模型初始化，Console `portaldb-init` 负责 Console 侧共享库依赖和自有表补齐；legacy 数据迁移不属于新环境 INIT。
 
 ### 早期手工部署记录
 
@@ -171,7 +173,7 @@ kubectl -n aigateway-system get configmap aigateway-cluster-domain
 - `values-release-base.yaml` 默认启用 `global.o11y.enabled=true`，标准部署也会安装 Grafana / Prometheus / Loki / Promtail。
 - 修复 `release-build.sh` 镜像提取逻辑，支持 Helm 渲染中的 `- image: ...` 形式，确保 Prometheus 镜像进入离线 bundle。
 
-随后重新生成 `out/release/aigateway-1.1.0/`，bundle 镜像数为 `13`，同步目标机并导入所有镜像后，执行 Helm upgrade 到 revision `5`。当前目标机工作负载已收敛为 standard profile：
+随后重新生成 `out/release/aigateway-1.1.0/`，bundle 镜像数为 `13`，同步目标机并导入所有镜像后完成部署。本次重置后的干净安装为 Helm revision `1`，已包含 Redis standalone 服务名与 `higress-config` 升级覆盖修复。当前目标机工作负载已收敛为 standard profile：
 
 - Console / Portal / Controller / Gateway / Plugin Server：各 `1` 个副本
 - PostgreSQL：`1` 个实例
@@ -192,12 +194,14 @@ curl -H 'Host: portal.aigateway.io' http://192.168.42.200/
 
 验证结果：
 
-- Helm：`STATUS: deployed`，revision `3`
+- Helm：`STATUS: deployed`，revision `1`
 - k3d：单节点 `k3d-aigateway-110-server-0`
 - `aigateway-system` 业务 Pod 全部 Running
 - `kube-system` 已无默认 `traefik` Service / Deployment
-- Console Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:b5740ee6fc3b30e3666e8d1ccd7346eab388ed368df3414d21d3826908700d23`
-- Portal Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:99aea3a308e16000e1c36574d113cd7ef031e112925ac45e03d2f23bbbb5dea1`
+- Console Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:2f3787124d5765fb3a973301b08f073e6c3eac842e35f77144f19fa318ef0987`
+- Portal Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:aad300c19e23b280c577f8bfad61c5bdb06a0d4f0b60745d16d905b7bb78f620`
+- 当前最新一次干净安装的 Console Pod imageID 为 `sha256:2e6ed7795794c7961d53f7dd219da15736fb9cb2b67dbe8b41a39b940445c496`
+- 当前最新一次干净安装的 Portal Pod imageID 为 `sha256:38d1abe4d1a53d812ac787a2cee1a2685dbc1ae6e906d62ab51976f4913fe0e5`
 - Console Ingress：HTTP `200 OK`
 - Portal Ingress：HTTP `200 OK`
 - key-auth 投影修复后，Portal 首次同步会创建非全局认证的 `key-auth.internal`，无 AI 路由时不拦截 Console / Portal 入口，也不再持续打印 `key-auth wasmplugin not found`。
@@ -206,3 +210,7 @@ curl -H 'Host: portal.aigateway.io' http://192.168.42.200/
 - Console Pod 内访问 Grafana health 返回 `database: ok`
 - 使用 `admin/admin` 登录 Console 后访问 `/dashboard/info?type=MAIN` 返回 `builtIn: true`
 - 使用 `admin/admin` 登录 Console 后访问 `/dashboard/native?type=MAIN` 已返回 CPU / Memory / Gateway Pod Count 等指标数据
+- `higress-config` 已渲染 `mcpServer.redis.address=redis-server-master.aigateway-system.svc.cluster.local:6379`，`14:55:00Z` 之后 Gateway 日志未再出现 Redis `no such host` / reconnect 错误。
+- 本次重置后安装日志为 `install-k3d-offline-20260424153204.log`；首次启动期 Portal 因等待 PostgreSQL ready 出现 3 次重启，Gateway 启动期出现 1 次重启，随后均保持 Running，复查 90 秒窗口内无 Redis / segfault / panic 新错误。
+- Portal `db-init` 已输出 `billing backfill summary: models=3/3 priced=3/3 ...`。
+- Console `portaldb-init` 已成功执行；PostgreSQL 内已确认 `portal_model_binding_price_version`、`billing_model_catalog`、`billing_model_price_version`、`portal_user` 存在，`billing_model_catalog=3`、`billing_model_price_version=3`。
