@@ -34,6 +34,7 @@
 
 ## 今日更新
 
+- 已修复 Portal `ai-chat` 一处 internal route 误路由：Portal 在解析 `/internal/ai-routes/*` 时不应复用公网 Ingress 的 host 作为 `Host` 头；此前 internal 调用会错误带上 `console.aigateway.io`，导致请求被路由到 Console Ingress 并返回 `{"message":"unauthorized","success":false}`。当前已调整 internal gateway resolver 不再为 internal target 推导 `HostHeader`。
 - 已定位并修复公网 AI Route 一处计费绕过：`modelPredicates` 若直接投影成 public ingress 的 `x-higress-llm-model` 匹配，标准 OpenAI-compatible 请求只在 body 里携带 `model`、不带该 header，会绕过挂在 AI Route 上的 `ai-quota` / `ai-statistics`；现已调整为仅 internal AI Route 保留该 header 匹配，public ingress 不再强制要求 `x-higress-llm-model`。
 - 已针对线上 `console.aigateway.io/consumer` 的 `Portal database is unavailable` 首启窗口做稳定性加固：Console `portaldb` 健康检查不再把启动期 PostgreSQL 失败永久缓存为 `portalHealthy=false`；Portal `main` 改为在进程内循环等待数据库与 bootstrap 就绪，不再因 PostgreSQL 稍晚启动而直接退出 Pod。
 - 已补 release standard profile 的 Portal Prometheus 注入：`aigateway-portal.backend.corePrometheusURL` 固定指向 `http://aigateway-console-prometheus:9090/prometheus`，避免新环境 AI 监控面板因未注入指标源而无用量统计。
@@ -44,7 +45,7 @@
 - 已为新环境发布链路补充显式数据库初始化阶段：`release-deploy` 在 Helm `--wait` 后会依次执行 Portal `db-init` 与 Console `portaldb-init`，不再依赖首个业务请求触发补表。
 - 已在 `192.168.42.200` 干净 Ubuntu 24.04.3 LTS 环境完成 `1.1.0` k3d 实机部署；正式访问口径已切为 Kubernetes Ingress：`console.aigateway.io`、`portal.aigateway.io`。
 - 已在目标机输出运行时离线包与安装日志：`/opt/aigateway-install/1.1.0/offline-packages/`、`/opt/aigateway-install/1.1.0/logs/`；过程文档已写入 `docs/release/1.1.0/install-192.168.42.200.md`。
-- `2026-04-25` 已在 `192.168.42.200` 再次重置后的干净 Ubuntu 24.04.3 LTS 上完成最新一次离线安装，安装日志为 `install-k3d-offline-20260425010528.log`，Helm revision `1`，Console / Portal Ingress 均返回 `200`。
+- `2026-04-25` 已在 `192.168.42.200` 再次重置后的干净 Ubuntu 24.04.3 LTS 上完成最新一次离线安装，安装日志为 `install-k3d-offline-20260425021113.log`，Helm revision `1`，Console / Portal Ingress 均返回 `200`。
 - 已启动 `1.1.0` 正式发布交付：`helm/image-versions.yaml`、父 Chart、Console / Portal 子 Chart 和 release values 已切到 `1.1.0`，默认 bundle 名称为 `aigateway-1.1.0`。
 - 已新增 `docs/release/1.1.0/` 发布说明、镜像包说明、部署说明，以及 `docs/overview/aigateway-whitepaper-1.1.0.md` 项目介绍白皮书。
 - 已调整 `scripts/export-formal-docs.py` 支持按 `--version` 导出当前版本正式文档，默认输出为 `out/docs/1.1.0/`。

@@ -21,7 +21,7 @@
 - 第三方依赖镜像保持上游版本，通过 release values、bundle `metadata/images.lock` 与 `SHA256SUMS` 锁定。
 - `1.1.0` 文档真相源：`docs/release/1.1.0/release-notes.md`、`image-bundle.md`、`deployment-guide.md`、`docs/overview/aigateway-whitepaper-1.1.0.md`。
 - `1.1.0` 交付件：release bundle 在 `out/release/aigateway-1.1.0/`，正式文档与 PPT 在 `out/docs/1.1.0/`。
-- 已在 `192.168.42.200` 干净 Ubuntu 24.04.3 LTS 完成离线 k3d 部署验证。安装目录固定为 `/opt/aigateway-install/1.1.0/`，最新安装日志为 `logs/install-k3d-offline-20260425010528.log`。
+- 已在 `192.168.42.200` 干净 Ubuntu 24.04.3 LTS 完成离线 k3d 部署验证。安装目录固定为 `/opt/aigateway-install/1.1.0/`，最新安装日志为 `logs/install-k3d-offline-20260425021113.log`。
 - 正式访问口径走 Kubernetes Ingress：`console.aigateway.io`、`portal.aigateway.io`；不保留 Console / Portal port-forward systemd 服务。
 - 标准 K8S 集群从 `aigateway-system/aigateway-cluster-domain` 读取 `baseDomain`；新建 k3d 可用 `release-k3d-cluster.sh --base-domain` 写入，后续可通过 `release-deploy --base-domain` 修改。
 - release 默认 profile 已收敛为 `standard`，新建 k3d 默认单节点 `1 server + 0 agent`；`ha` profile 仅显式启用。
@@ -54,6 +54,7 @@
 - `ai-quota` 若回退到 `UNSPECIFIED_PHASE`，已在 `minikube-dev` 复现 `401 Request denied by ai quota check. No Key Authentication information found.`。
 - public AI Route 不应把 `modelPredicates` 直接收口成 `x-higress-llm-model` 必填 header；标准 OpenAI-compatible 调用通常只在 body 中携带 `model`，若公网 ingress 强依赖该 header，请求会绕过挂在 AI Route 上的 `ai-quota` / `ai-statistics`，而 internal AI Route 仍正常计费。
 - internal AI Route 由 Portal 后端直连 `/internal/ai-routes/*` 并写入 `x-mse-consumer`，不要求 `key-auth` 挂到 `*-internal` ingress。
+- Portal internal AI chat 调用不得复用公网 Ingress 的 host 作为 `Host` 头；若对 `/internal/ai-routes/*` 请求带上 `console.aigateway.io` 等公网 host，网关可能把请求错误路由到 Console/Portal Ingress，并返回业务侧 `unauthorized` JSON，而不是 AI Route 响应。
 - 不要在 release chart 默认预置全局认证的 `key-auth.internal`。Portal key-auth 同步器负责创建 / 更新 `key-auth.internal`，实例级 `global_auth=false`；Console 负责在业务 Route / AI Route 上写 `matchRules.allow`。
 - key-auth 多来源认证口径固定支持 `Authorization: Bearer`、`x-api-key`、`x-goog-api-key`、query `key`；不同来源出现不同 key 时返回 `401`。
 

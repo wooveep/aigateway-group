@@ -54,10 +54,10 @@ images:
     tag: "1.1.0"
   console:
     repository: aigateway/console
-    tag: "1.1.0"
+    tag: "1.1.0-dev-20260425100829"
   portal:
     repository: aigateway/portal
-    tag: "1.1.0"
+    tag: "1.1.0-dev-20260425100829"
   plugin-server:
     repository: aigateway/plugin-server
     tag: "1.1.0"
