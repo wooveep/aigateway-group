@@ -1,6 +1,6 @@
 # AIGateway 1.1.0 安装记录：192.168.42.200
 
-日期：2026-04-24  
+日期：2026-04-25  
 目标机：Ubuntu 24.04.3 LTS / root / `192.168.42.200`  
 部署方式：`k3d + Helm + out/release/aigateway-1.1.0`
 
@@ -21,7 +21,7 @@
 - 运行时离线包：
   - `/opt/aigateway-install/1.1.0/offline-packages/aigateway-runtime-with-k3d-images-ubuntu24.04-amd64-20260424.tar.gz`
 - 过程日志：`/opt/aigateway-install/1.1.0/logs/`
-  - 最新一键安装日志：`/opt/aigateway-install/1.1.0/logs/install-k3d-offline-20260424153204.log`
+  - 最新一键安装日志：`/opt/aigateway-install/1.1.0/logs/install-k3d-offline-20260425010528.log`
 
 ## 已安装运行时
 
@@ -200,8 +200,8 @@ curl -H 'Host: portal.aigateway.io' http://192.168.42.200/
 - `kube-system` 已无默认 `traefik` Service / Deployment
 - Console Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:2f3787124d5765fb3a973301b08f073e6c3eac842e35f77144f19fa318ef0987`
 - Portal Pod 镜像已更新到本次重建镜像，container imageID 为 `sha256:aad300c19e23b280c577f8bfad61c5bdb06a0d4f0b60745d16d905b7bb78f620`
-- 当前最新一次干净安装的 Console Pod imageID 为 `sha256:2e6ed7795794c7961d53f7dd219da15736fb9cb2b67dbe8b41a39b940445c496`
-- 当前最新一次干净安装的 Portal Pod imageID 为 `sha256:38d1abe4d1a53d812ac787a2cee1a2685dbc1ae6e906d62ab51976f4913fe0e5`
+- 当前最新一次干净安装的 Console Pod imageID 为 `sha256:0b7854ba2884efd07c178b54af0efc6575f549f92e108597a584d70b1e6a8cfd`
+- 当前最新一次干净安装的 Portal Pod imageID 为 `sha256:ef22af4e5a9f6be6c37d34aa020d110a4930df0dd6c2e9bf017f73bd7f69523b`
 - Console Ingress：HTTP `200 OK`
 - Portal Ingress：HTTP `200 OK`
 - key-auth 投影修复后，Portal 首次同步会创建非全局认证的 `key-auth.internal`，无 AI 路由时不拦截 Console / Portal 入口，也不再持续打印 `key-auth wasmplugin not found`。
@@ -211,6 +211,6 @@ curl -H 'Host: portal.aigateway.io' http://192.168.42.200/
 - 使用 `admin/admin` 登录 Console 后访问 `/dashboard/info?type=MAIN` 返回 `builtIn: true`
 - 使用 `admin/admin` 登录 Console 后访问 `/dashboard/native?type=MAIN` 已返回 CPU / Memory / Gateway Pod Count 等指标数据
 - `higress-config` 已渲染 `mcpServer.redis.address=redis-server-master.aigateway-system.svc.cluster.local:6379`，`14:55:00Z` 之后 Gateway 日志未再出现 Redis `no such host` / reconnect 错误。
-- 本次重置后安装日志为 `install-k3d-offline-20260424153204.log`；首次启动期 Portal 因等待 PostgreSQL ready 出现 3 次重启，Gateway 启动期出现 1 次重启，随后均保持 Running，复查 90 秒窗口内无 Redis / segfault / panic 新错误。
+- 本次重置后安装日志为 `install-k3d-offline-20260425010528.log`；Portal 本轮首启未重启，Gateway 启动期出现 1 次重启，随后均保持 Running，复查 90 秒窗口内无 Redis / segfault / panic 新错误。
 - Portal `db-init` 已输出 `billing backfill summary: models=3/3 priced=3/3 ...`。
 - Console `portaldb-init` 已成功执行；PostgreSQL 内已确认 `portal_model_binding_price_version`、`billing_model_catalog`、`billing_model_price_version`、`portal_user` 存在，`billing_model_catalog=3`、`billing_model_price_version=3`。
