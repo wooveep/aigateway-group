@@ -7,6 +7,7 @@ TARGET=""
 RELEASE_NAME="aigateway"
 NAMESPACE="aigateway-system"
 PROFILE="ha"
+USER_PROVIDED_PROFILE=false
 REGISTRY=""
 IMAGE_PULL_SECRET=""
 REPLICAS=""
@@ -14,7 +15,13 @@ DRY_RUN=false
 SKIP_IMPORT=false
 SKIP_PUSH=false
 SKIP_DEPLOY=false
+SKIP_DB_INIT=false
 K3D_CLUSTER=""
+INGRESS_BASE_DOMAIN=""
+USER_PROVIDED_BASE_DOMAIN=false
+CONSOLE_HOST=""
+PORTAL_HOST=""
+DOMAIN_CONFIG_NAME="aigateway-cluster-domain"
 HELM_TIMEOUT="${HELM_TIMEOUT:-15m}"
 EXTRA_SET_ARGS=()
 
@@ -33,9 +40,13 @@ Options:
   --image-pull-secret <name>    Optional image pull secret for k8s deploy.
   --replicas <csv>              e.g. gateway=3,controller=2,pluginServer=2,console=2,portal=2
   --cluster <name>              k3d cluster name. Default: inferred from current context.
+  --base-domain <domain>        Console/Portal base domain. Hosts become console.<domain>/portal.<domain>.
+  --console-host <host>         Console ingress host override.
+  --portal-host <host>          Portal ingress host override.
   --skip-import                 Skip docker load / k3d import.
   --skip-push                   Skip docker push when target=k8s.
   --skip-deploy                 Skip helm upgrade.
+  --skip-db-init                Skip in-cluster database initialization after helm deploy.
   --set key=value               Additional Helm set values.
   --dry-run                     Print actions only.
   -h, --help                    Show help.
@@ -46,6 +57,28 @@ run() {
   echo "+ $*"
   if [[ "${DRY_RUN}" != "true" ]]; then
     "$@"
+  fi
+}
+
+deployment_exists() {
+  kubectl -n "${NAMESPACE}" get deployment "$1" >/dev/null 2>&1
+}
+
+run_db_init() {
+  if [[ "${SKIP_DB_INIT}" == "true" || "${SKIP_DEPLOY}" == "true" ]]; then
+    return 0
+  fi
+
+  if deployment_exists "aigateway-portal"; then
+    run kubectl -n "${NAMESPACE}" exec deploy/aigateway-portal -- /app/aigateway-portal db-init
+  else
+    echo "[WARN] Skip portal db init: deployment/aigateway-portal not found" >&2
+  fi
+
+  if deployment_exists "aigateway-console"; then
+    run kubectl -n "${NAMESPACE}" exec deploy/aigateway-console -- /app/aigateway-console portaldb-init
+  else
+    echo "[WARN] Skip console portaldb init: deployment/aigateway-console not found" >&2
   fi
 }
 
@@ -104,6 +137,60 @@ apply_replica_sets() {
         ;;
     esac
   done
+}
+
+read_cluster_base_domain() {
+  local base_domain
+  base_domain="$(kubectl -n "${NAMESPACE}" get configmap "${DOMAIN_CONFIG_NAME}" -o jsonpath='{.data.baseDomain}' 2>/dev/null || true)"
+  if [[ -z "${base_domain}" ]]; then
+    base_domain="$(kubectl get namespace "${NAMESPACE}" -o jsonpath='{.metadata.annotations.aigateway\.io/ingress-base-domain}' 2>/dev/null || true)"
+  fi
+  printf '%s\n' "${base_domain}"
+}
+
+save_cluster_domain_config() {
+  local base_domain="$1"
+  [[ -n "${base_domain}" ]] || return 0
+
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "+ kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+    echo "+ kubectl -n ${NAMESPACE} create configmap ${DOMAIN_CONFIG_NAME} --from-literal=baseDomain=${base_domain} --from-literal=consoleHost=console.${base_domain} --from-literal=portalHost=portal.${base_domain} --dry-run=client -o yaml | kubectl apply -f -"
+    echo "+ kubectl annotate namespace ${NAMESPACE} aigateway.io/ingress-base-domain=${base_domain} --overwrite"
+    return 0
+  fi
+
+  kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl -n "${NAMESPACE}" create configmap "${DOMAIN_CONFIG_NAME}" \
+    --from-literal="baseDomain=${base_domain}" \
+    --from-literal="consoleHost=console.${base_domain}" \
+    --from-literal="portalHost=portal.${base_domain}" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  kubectl annotate namespace "${NAMESPACE}" "aigateway.io/ingress-base-domain=${base_domain}" --overwrite
+}
+
+apply_ingress_host_overrides() {
+  local cluster_base_domain
+
+  if [[ -z "${INGRESS_BASE_DOMAIN}" ]]; then
+    cluster_base_domain="$(read_cluster_base_domain)"
+    INGRESS_BASE_DOMAIN="${cluster_base_domain}"
+  fi
+
+  if [[ -n "${INGRESS_BASE_DOMAIN}" ]]; then
+    [[ -n "${CONSOLE_HOST}" ]] || CONSOLE_HOST="console.${INGRESS_BASE_DOMAIN}"
+    [[ -n "${PORTAL_HOST}" ]] || PORTAL_HOST="portal.${INGRESS_BASE_DOMAIN}"
+  fi
+
+  if [[ -n "${CONSOLE_HOST}" ]]; then
+    EXTRA_SET_ARGS+=(--set "aigateway-console.ingress.enabled=true")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-console.ingress.domain=${CONSOLE_HOST}")
+  fi
+
+  if [[ -n "${PORTAL_HOST}" ]]; then
+    EXTRA_SET_ARGS+=(--set "aigateway-portal.ingress.enabled=true")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-portal.ingress.className=aigateway")
+    EXTRA_SET_ARGS+=(--set-string "aigateway-portal.ingress.host=${PORTAL_HOST}")
+  fi
 }
 
 import_bundle_images() {
@@ -181,6 +268,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --profile)
       PROFILE="$2"
+      USER_PROVIDED_PROFILE=true
       shift 2
       ;;
     --registry)
@@ -199,6 +287,19 @@ while [[ $# -gt 0 ]]; do
       K3D_CLUSTER="$2"
       shift 2
       ;;
+    --base-domain)
+      INGRESS_BASE_DOMAIN="$2"
+      USER_PROVIDED_BASE_DOMAIN=true
+      shift 2
+      ;;
+    --console-host)
+      CONSOLE_HOST="$2"
+      shift 2
+      ;;
+    --portal-host)
+      PORTAL_HOST="$2"
+      shift 2
+      ;;
     --skip-import)
       SKIP_IMPORT=true
       shift
@@ -209,6 +310,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-deploy)
       SKIP_DEPLOY=true
+      shift
+      ;;
+    --skip-db-init)
+      SKIP_DB_INIT=true
       shift
       ;;
     --set)
@@ -233,6 +338,13 @@ done
 [[ -d "${BUNDLE_DIR}" ]] || die "Bundle directory not found: ${BUNDLE_DIR}"
 [[ -f "${BUNDLE_DIR}/metadata/images.lock" ]] || die "Missing images.lock in bundle."
 
+if [[ "${USER_PROVIDED_PROFILE}" != "true" && -f "${BUNDLE_DIR}/metadata/release.env" ]]; then
+  BUNDLE_PROFILE="$(grep -E '^PROFILE=' "${BUNDLE_DIR}/metadata/release.env" | tail -n 1 | cut -d= -f2- || true)"
+  if [[ -n "${BUNDLE_PROFILE}" ]]; then
+    PROFILE="${BUNDLE_PROFILE}"
+  fi
+fi
+
 need_cmd docker
 need_cmd helm
 need_cmd kubectl
@@ -250,6 +362,11 @@ if [[ -n "${IMAGE_PULL_SECRET}" ]]; then
   EXTRA_SET_ARGS+=(--set-string "higress-core.global.imagePullSecrets[0].name=${IMAGE_PULL_SECRET}")
   EXTRA_SET_ARGS+=(--set-string "aigateway-console.imagePullSecrets[0].name=${IMAGE_PULL_SECRET}")
   EXTRA_SET_ARGS+=(--set-string "aigateway-portal.imagePullSecrets[0].name=${IMAGE_PULL_SECRET}")
+fi
+
+apply_ingress_host_overrides
+if [[ "${USER_PROVIDED_BASE_DOMAIN}" == "true" ]]; then
+  save_cluster_domain_config "${INGRESS_BASE_DOMAIN}"
 fi
 
 if [[ "${SKIP_IMPORT}" != "true" ]]; then
@@ -286,8 +403,14 @@ if [[ "${SKIP_DEPLOY}" != "true" ]]; then
     --timeout "${HELM_TIMEOUT}"
 fi
 
+run_db_init
+
 echo "Release deploy finished."
 echo "  target    : ${TARGET}"
 echo "  bundle    : ${BUNDLE_DIR}"
 echo "  release   : ${RELEASE_NAME}"
 echo "  namespace : ${NAMESPACE}"
+if [[ -n "${CONSOLE_HOST}" || -n "${PORTAL_HOST}" ]]; then
+  echo "  console   : ${CONSOLE_HOST:-<values-default>}"
+  echo "  portal    : ${PORTAL_HOST:-<values-default>}"
+fi

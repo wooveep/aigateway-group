@@ -10,14 +10,20 @@
   - 发布说明
   - 镜像包说明
   - K8S / K3D&Helm 部署说明
+- `release/1.1.0/`
+  - 发布说明
+  - 镜像包说明
+  - K8S / K3D&Helm 部署说明
+  - `192.168.42.200` 实机安装记录
+  - 离线 k3d 一键安装脚本说明
 - `manual/1.0.0/`
   - 用户手册
   - 页面截图引用
 
 ## 当前正式版本
 
-- 正式发布版本：`1.0.0`
-- 仓库管理的一方镜像：统一使用 `1.0.0`
+- 正式发布版本：`1.1.0`
+- 仓库管理的一方镜像：统一使用 `1.1.0`
 - 第三方依赖镜像：保持上游版本，通过 bundle 元数据与 Helm values 锁定
 
 ## 关联入口
@@ -33,4 +39,4 @@
   - `.venv-docs/bin/pip install python-docx`
   - `.venv-docs/bin/python scripts/export-formal-docs.py`
 - 默认输出目录：
-  - `out/docs/1.0.0/`
+  - `out/docs/1.1.0/`

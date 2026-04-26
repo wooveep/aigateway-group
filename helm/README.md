@@ -2,12 +2,12 @@
 
 正式交付文档请优先查看：
 
-- `../docs/release/1.0.0/release-notes.md`
-- `../docs/release/1.0.0/image-bundle.md`
-- `../docs/release/1.0.0/deployment-guide.md`
+- `../docs/release/1.1.0/release-notes.md`
+- `../docs/release/1.1.0/image-bundle.md`
+- `../docs/release/1.1.0/deployment-guide.md`
 
-当前正式发布版本口径固定为 `1.0.0`。  
-仓库管理的一方镜像统一使用 `1.0.0`，第三方依赖镜像保持上游版本并通过 bundle / Helm values 锁定。
+当前正式发布版本口径固定为 `1.1.0`。  
+仓库管理的一方镜像统一使用 `1.1.0`，第三方依赖镜像保持上游版本并通过 bundle / Helm values 锁定。
 
 推荐入口与兼容入口：
 
@@ -121,11 +121,21 @@
   - 默认执行：依赖检查 -> sync -> minikube start -> redeploy(local-minikube profile)
   - `--start-tunnel` 时附带执行 `minikube tunnel`
 - `./start.sh release-build`
-  - 生成发布 bundle：chart tgz、镜像 tar、values、`images.lock`、`SHA256SUMS`、`deploy.sh`
+  - 生成发布 bundle：chart tgz、镜像 tar、values、`images.lock`、`SHA256SUMS`、`deploy.sh`、`k3d-cluster.sh`、`install-k3d-offline.sh`
 - `./start.sh release-deploy`
   - 从 bundle 部署到 `k3d` / 通用 `k8s`
   - `--target k3d`：`docker load + k3d image import + helm upgrade`
   - `--target k8s`：`docker load + docker tag/push + helm upgrade`
+  - Console / Portal Ingress 域名优先读取 `aigateway-system/aigateway-cluster-domain` 的 `baseDomain`；也可以用 `--base-domain`、`--console-host`、`--portal-host` 覆盖
+- `./start.sh release-k3d-cluster` / `./scripts/release-k3d-cluster.sh`
+  - 新建 k3d 发布验收集群，并用 `--base-domain` 写入集群域名定义；默认 `--agents 0`，即单节点 k3d
+  - 默认禁用 k3s Traefik，避免与 AIGateway Ingress 入口冲突
+- `out/release/<bundle>/install-k3d-offline.sh`
+  - 面向 Ubuntu 24.04 离线机器的一键 k3d 安装入口
+  - 安装 runtime 包、创建单节点 k3d、逐节点导入 k3d/k3s 系统镜像和 release 镜像，并执行 Helm 部署
+  - `standard` profile 使用 Redis standalone，`higress-config` 中 `mcpServer.redis.address` 会渲染为 `redis-server-master.<namespace>.svc.cluster.local:6379`
+  - `standard` profile 会同时给 Portal 注入 `aigateway-console-prometheus` 作为 `corePrometheusURL`，否则 AI 监控面板 / 用量统计无数据
+  - release profile 会固定 `global.onlyPushRouteCluster=false`，确保 `ai-quota` / `ai-token-ratelimit` / `cluster-key-rate-limit` 能访问普通 Kubernetes Service 形式的 Redis
 
 ## 发布 bundle
 
@@ -138,7 +148,7 @@
 发布 bundle 默认目录：
 
 ```text
-out/release/aigateway-1.0.0/
+out/release/aigateway-1.1.0/
   charts/
   images/
   values/
@@ -171,20 +181,27 @@ out/release/aigateway-1.0.0/
 ./start.sh sync --check
 
 # 3. 生成 release bundle
-./start.sh release-build --bundle-name aigateway-1.0.0
+./start.sh release-build --bundle-name aigateway-1.1.0
 
 # 4. k8s 目标 dry-run
 ./start.sh release-deploy \
   --target k8s \
-  --bundle-dir out/release/aigateway-1.0.0 \
+  --bundle-dir out/release/aigateway-1.1.0 \
   --registry registry.example.com/team \
   --dry-run
 
 # 5. k3d 目标 dry-run
+./start.sh release-k3d-cluster \
+  --cluster <k3d-cluster> \
+  --base-domain example.com \
+  --dry-run
+
 ./start.sh release-deploy \
   --target k3d \
-  --bundle-dir out/release/aigateway-1.0.0 \
+  --bundle-dir out/release/aigateway-1.1.0 \
   --cluster <k3d-cluster> \
+  --profile standard \
+  --base-domain example.com \
   --dry-run
 
 # 6. Helm 渲染检查：HA + upstream 负载模板
@@ -202,6 +219,17 @@ cd ../../aigateway-portal/backend
 GOTOOLCHAIN=auto go test ./internal/service/portal \
   -run TestPortalReadsConsoleWrittenSharedSchemaRowsOnPostgres -count=1
 ```
+
+`release-deploy` 在真实部署时会在 Helm `--wait` 之后自动执行两段数据库初始化：
+
+- `kubectl exec deploy/aigateway-portal -- /app/aigateway-portal db-init`
+- `kubectl exec deploy/aigateway-console -- /app/aigateway-console portaldb-init`
+
+其中 `portaldb-init` 只负责 Console 自有表初始化；旧库 legacy 迁移仍通过单独命令 `portal-legacy-migrate` 执行，不属于新环境 INIT。
+
+同时，Console / Portal Deployment 现在都会先运行 `wait-for-portal-db` initContainer，通过 `pg_isready` 等待 PostgreSQL ready；Portal 业务容器即使仍先于库进入运行态，也会在进程内继续重试数据库/bootstrap 初始化，不再因为共享库稍晚启动直接退出 Pod。
+
+如需仅验证 Helm 升级而跳过这一步，可显式传 `--skip-db-init`。
 
 ## Portal OIDC SSO 部署补充
 
@@ -263,7 +291,8 @@ aigateway-portal:
 - 本地开发
   - 默认使用共享 `PostgreSQL + Redis`
 - 发布环境
-  - 默认使用 `Redis HA + PostgreSQL HA + pgvector`
+  - 默认 `standard` profile 使用单副本 PostgreSQL、Pgpool 和 standalone Redis
+  - 显式 `ha` profile 使用 `Redis HA + PostgreSQL HA + pgvector`
 
 发布环境共享数据库入口：
 

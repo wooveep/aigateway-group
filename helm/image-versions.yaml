@@ -31,33 +31,33 @@ minikube:
 
 release:
   outputDir: out/release
-  bundleName: aigateway-1.0.0
+  bundleName: aigateway-1.1.0
   baseValuesFile: higress/helm/higress/values-release-base.yaml
   haValuesFile: higress/helm/higress/values-release-ha.yaml
   upstreamsValuesFile: higress/helm/higress/values-release-upstreams.yaml
-  profile: ha
+  profile: standard
 
 images:
   # Kept in sync with aigateway-console.certmanager.image.* because the
   # existing local build flow still resolves the "aigateway" image from there.
   aigateway:
     repository: aigateway
-    tag: "1.0.0"
+    tag: "1.1.0"
   controller:
     repository: aigateway/controller
-    tag: "1.0.0"
+    tag: "1.1.0"
   gateway:
     repository: aigateway/gateway
-    tag: "1.0.0"
+    tag: "1.1.0"
   pilot:
     repository: aigateway/pilot
-    tag: "1.0.0"
+    tag: "1.1.0"
   console:
     repository: aigateway/console
-    tag: "1.0.0-dev-20260424135639"
+    tag: "1.1.0-dev-20260425100829"
   portal:
     repository: aigateway/portal
-    tag: "1.0.0-dev-20260424135639"
+    tag: "1.1.0-dev-20260425100829"
   plugin-server:
     repository: aigateway/plugin-server
-    tag: "1.0.0"
+    tag: "1.1.0"

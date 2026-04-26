@@ -28,13 +28,18 @@ except ModuleNotFoundError as exc:
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DOCS = [
-    REPO_ROOT / "docs/overview/aigateway-whitepaper-1.0.0.md",
-    REPO_ROOT / "docs/release/1.0.0/release-notes.md",
-    REPO_ROOT / "docs/release/1.0.0/image-bundle.md",
-    REPO_ROOT / "docs/release/1.0.0/deployment-guide.md",
-    REPO_ROOT / "docs/manual/1.0.0/user-manual.md",
-]
+DEFAULT_VERSION = "1.1.0"
+
+
+def default_docs(version: str) -> list[Path]:
+    candidates = [
+        REPO_ROOT / f"docs/overview/aigateway-whitepaper-{version}.md",
+        REPO_ROOT / f"docs/release/{version}/release-notes.md",
+        REPO_ROOT / f"docs/release/{version}/image-bundle.md",
+        REPO_ROOT / f"docs/release/{version}/deployment-guide.md",
+        REPO_ROOT / f"docs/manual/{version}/user-manual.md",
+    ]
+    return [path for path in candidates if path.exists()]
 
 
 @dataclass
@@ -380,9 +385,9 @@ def render_pdf(html_path: Path, pdf_path: Path, chrome_bin: str) -> None:
     )
 
 
-def build_manifest(rows: Iterable[tuple[Path, Path, Path, Path]], output_path: Path) -> None:
+def build_manifest(rows: Iterable[tuple[Path, Path, Path, Path]], output_path: Path, version: str) -> None:
     lines = [
-        "# AIGateway 1.0.0 正式文档导出清单",
+        f"# AIGateway {version} 正式文档导出清单",
         "",
         "本目录存放从 `docs/` Markdown 真相源导出的正式交付件。",
         "",
@@ -405,8 +410,13 @@ def build_manifest(rows: Iterable[tuple[Path, Path, Path, Path]], output_path: P
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export formal Markdown docs to DOCX and PDF.")
     parser.add_argument(
+        "--version",
+        default=DEFAULT_VERSION,
+        help=f"Release documentation version. Default: {DEFAULT_VERSION}.",
+    )
+    parser.add_argument(
         "--output-dir",
-        default=str(REPO_ROOT / "out/docs/1.0.0"),
+        default="",
         help="Directory for exported HTML, DOCX, and PDF files.",
     )
     parser.add_argument(
@@ -416,11 +426,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    output_dir = Path(args.output_dir).resolve()
+    output_dir = Path(args.output_dir or REPO_ROOT / f"out/docs/{args.version}").resolve()
     html_dir = output_dir / "html"
     rows: list[tuple[Path, Path, Path, Path]] = []
+    docs = default_docs(args.version)
+    if not docs:
+        raise SystemExit(f"No formal docs found for version {args.version}")
 
-    for doc_path in DEFAULT_DOCS:
+    for doc_path in docs:
         stem = doc_path.stem
         html_path = html_dir / f"{stem}.html"
         docx_path = output_dir / f"{stem}.docx"
@@ -432,7 +445,7 @@ def main() -> None:
 
         rows.append((doc_path, html_path, docx_path, pdf_path))
 
-    build_manifest(rows, output_dir / "README.md")
+    build_manifest(rows, output_dir / "README.md", args.version)
     print(f"Exported {len(rows)} documents to {output_dir}")
 
 
